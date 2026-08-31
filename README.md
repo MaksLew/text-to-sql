@@ -9,7 +9,6 @@ The model receives the question and schema as `CREATE TABLE` statements. It has 
 ```bash
 uv sync
 ./scripts/download_spider.sh
-uv run python tests/test_exact_set_match.py
 uv run validate spider-v1 --runtime.type subprocess
 ```
 
