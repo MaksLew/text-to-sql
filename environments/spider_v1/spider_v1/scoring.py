@@ -10,6 +10,9 @@ from pathlib import Path
 
 _FENCE = re.compile(r"```(?:sql)?\s*(.*?)```", re.IGNORECASE | re.DOTALL)
 _ORDER_BY = re.compile(r"\border\s+by\b", re.IGNORECASE)
+_QUOTED = re.compile(r'"([^"]+)"')
+_OUTPUT_ALIAS = re.compile(r"\s+AS\s+(?:\"[^\"]+\"|[A-Za-z_]\w*)\s*$", re.IGNORECASE)
+_FROM = re.compile(r"\bFROM\b", re.IGNORECASE)
 
 
 def extract_sql(reply: str) -> str:
@@ -86,6 +89,24 @@ def _foreign_key_maps(evaluator_dir: str, tables_path: str) -> dict:
     )
 
 
+def _normalize_for_spider(sql: str, schema: dict[str, list[str]]) -> str:
+    """Remove syntax the official parser rejects without changing SQL meaning."""
+    identifiers = {name.lower() for table, columns in schema.items() for name in (table, *columns)}
+    sql = _QUOTED.sub(
+        lambda match: match.group(1) if match.group(1).lower() in identifiers else match.group(0),
+        sql,
+    )
+
+    # The official parser ignores output aliases semantically but cannot parse them.
+    from_match = _FROM.search(sql)
+    if from_match:
+        select = ",".join(
+            _OUTPUT_ALIAS.sub("", item) for item in sql[: from_match.start()].split(",")
+        )
+        sql = f"{select} {sql[from_match.start():]}"
+    return sql
+
+
 def exact_set_match(
     evaluator_dir: str,
     tables_path: str,
@@ -99,7 +120,9 @@ def exact_set_match(
         return False, "empty prediction"
     evaluator = _load_spider_evaluator(evaluator_dir)
     try:
-        schema = evaluator.Schema(evaluator.get_schema(db_path))
+        raw_schema = evaluator.get_schema(db_path)
+        predicted_sql = _normalize_for_spider(predicted_sql, raw_schema)
+        schema = evaluator.Schema(raw_schema)
         gold = evaluator.get_sql(schema, gold_sql)
         predicted = evaluator.get_sql(schema, predicted_sql)
         key_map = _foreign_key_maps(evaluator_dir, tables_path)[db_id]
