@@ -15,6 +15,16 @@ uv run validate spider-v1 --runtime.type subprocess
 
 The download script retrieves the official Spider release and keeps only the 20 databases used by the development split. Dataset files are ignored by Git and remain under `data/spider_data/`. Spider is distributed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 
+### Verifiers UV bootstrap regression
+
+The pinned Verifiers revision unconditionally upgrades UV whenever it prepares a runtime script. With the local `subprocess` runtime this can repeatedly reinstall UV until harness setup times out. If setup stalls or reports `HarnessError: harness setup timed out`, apply the included workaround after `uv sync`:
+
+```bash
+uv run python scripts/apply_verifiers_uv_patch.py
+```
+
+The patch first reuses an installed UV that supports `uv sync --script`. It modifies the ignored `.venv`, so a clean environment or dependency reinstall may require applying it again. Remove this workaround after updating to a Verifiers revision containing the upstream fix.
+
 ## Evaluate an API model
 
 ```bash
