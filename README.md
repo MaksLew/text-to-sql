@@ -48,6 +48,26 @@ uv run eval @ configs/spider-openai.toml --model gpt-5.6-luna -n 3 --no-push
 
 For another OpenAI-compatible API, override `model`, `client.base-url`, and `client.api-key-var` or copy the small TOML file.
 
+## Evaluate Qwen3.5-4B locally with llama.cpp
+
+llama.cpp loads **GGUF** files. Put `Qwen3.5-4B-M-TS-Q4_K_M.gguf` in `models/` (Q4_K_M is the sensible CPU starting point), then run:
+
+```bash
+cp .env.example .env  # or add LLAMA_CPP_API_KEY=local to the existing file
+docker compose -f compose.llama-cpp.yaml up -d
+curl http://localhost:8080/health
+uv run --env-file .env eval @ configs/spider-qwen3.5-4b-llama-cpp.toml --dry-run
+uv run --env-file .env eval @ configs/spider-qwen3.5-4b-llama-cpp.toml -n 3 --no-push
+```
+
+Override CPU threads, context size, or a different GGUF filename without editing the Compose file:
+
+```bash
+THREADS=12 CONTEXT_SIZE=16384 MODEL_FILE=other.gguf docker compose -f compose.llama-cpp.yaml up -d
+```
+
+The default server disables thinking for comparable SQL-only answers and runs one request at a time. The agentic variant is `configs/spider-agentic-qwen3.5-4b-llama-cpp.toml`.
+
 Results are written under `outputs/` with the resolved config, traces, rewards, extracted SQL, and SQL errors. Print only a trace's conversation with:
 
 ```bash

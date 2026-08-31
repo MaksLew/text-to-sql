@@ -1,0 +1,24 @@
+services:
+  llama-cpp:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./models:/models:ro,z
+    command:
+      - --model
+      - /models/${MODEL_FILE:-Qwen3.5-4B-M-TS-Q4_K_M.gguf}
+      - --alias
+      - qwen3.5-4b
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --ctx-size
+      - "${CONTEXT_SIZE:-8192}"
+      - --threads
+      - "${THREADS:-8}"
+      - --parallel
+      - "1"
+      - --reasoning
+      - "off"
