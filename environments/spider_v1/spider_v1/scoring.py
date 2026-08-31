@@ -58,6 +58,20 @@ def _load_spider_evaluator(evaluator_dir: str):
         raise FileNotFoundError(
             f"Spider evaluator not found at {root}; run scripts/download_spider.sh"
         )
+
+    # The official evaluator uses absolute imports, so reject conflicting modules
+    # rather than silently loading code from another evaluator directory.
+    for name in ("evaluation", "process_sql", "exec_eval", "parse"):
+        module = sys.modules.get(name)
+        expected = (root / f"{name}.py").resolve()
+        loaded = getattr(module, "__file__", None) if module else None
+        if module and (not loaded or Path(loaded).resolve() != expected):
+            source = Path(loaded).resolve() if loaded else "an unknown location"
+            raise RuntimeError(
+                f"cannot load Spider evaluator from {root}: {name!r} is already "
+                f"loaded from {source}"
+            )
+
     sys.path.insert(0, str(root))
     try:
         return importlib.import_module("evaluation")
