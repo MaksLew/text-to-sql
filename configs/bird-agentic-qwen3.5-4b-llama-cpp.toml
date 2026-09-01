@@ -1,0 +1,27 @@
+model = "qwen3.5-4b"
+num_rollouts = 1
+max_concurrent = 1
+push = false
+
+[sampling]
+temperature = 0.7
+top_p = 0.8
+
+[client]
+type = "eval"
+base_url = "http://localhost:8080/v1"
+api_key_var = "LLAMA_CPP_API_KEY"
+
+[env.timeout]
+episode = 300
+
+[env.taskset]
+id = "bird-v1"
+split = "dev"
+data_dir = "data/bird/dev_20240627"
+
+[env.agent.harness]
+id = "null"
+
+[env.agent.runtime]
+type = "subprocess"
