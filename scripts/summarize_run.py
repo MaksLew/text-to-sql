@@ -23,11 +23,14 @@ def summarize(path: Path) -> dict:
         for call in trace.get("calls", []):
             for name, value in call.get("usage", {}).items():
                 usage[name] += value or 0
-        if trace.get("rewards", {}).get("execution_accuracy", {}).get("score") == 0:
+        execution_accuracy = trace.get("rewards", {}).get("execution_accuracy")
+        score = execution_accuracy.get("score") if isinstance(execution_accuracy, dict) else execution_accuracy
+        if score == 0:
             data = trace.get("task", {}).get("data", {})
             failed[data.get("db_id", "unknown")].append(data.get("name", "unknown"))
 
     return {
+        "episodes": len(episodes),
         "traces": len(traces),
         "rewards": rewards,
         "metrics": metrics,
@@ -45,40 +48,46 @@ def summarize(path: Path) -> dict:
     }
 
 
-def print_scores(title: str, scores: dict[str, list[float]]) -> None:
-    print(f"{title}:")
+def format_scores(scores: dict[str, list[float]]) -> str:
+    parts = []
     for name, values in sorted(scores.items()):
         total = sum(values)
         average = total / len(values) if values else 0
-        count = f"{total:g}/{len(values)}" if all(value in (0, 1) for value in values) else f"mean {average:.4f}"
-        print(f"  {name}: {count} ({average:.1%})")
+        value = f"{total:g}/{len(values)}" if all(score in (0, 1) for score in values) else f"mean {average:.4f}"
+        parts.append(f"{name} {value} ({average:.1%})")
+    return "; ".join(parts)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Summarize a Verifiers evaluation run")
     parser.add_argument("run", type=Path, help="run directory or traces.jsonl path")
+    parser.add_argument("--failures", action="store_true", help="list every failed task")
     args = parser.parse_args()
 
     result = summarize(args.run)
-    print(f"Traces: {result['traces']}")
-    print_scores("Rewards", result["rewards"])
-    print_scores("Metrics", result["metrics"])
+    print(f"Run: {result['episodes']} episodes | {result['traces']} traces")
+    if scores := format_scores(result["rewards"]):
+        print(f"Rewards: {scores}")
+    if scores := format_scores(result["metrics"]):
+        print(f"Metrics: {scores}")
     print(
         "Errors: "
-        f"{result['episode_errors']} episode, {result['trace_errors']} trace, "
-        f"{result['sql_errors']} SQL, {result['metric_errors']} metric parser"
+        f"{result['episode_errors']} episode | {result['trace_errors']} trace | "
+        f"{result['sql_errors']} SQL | {result['metric_errors']} metric parser"
     )
     usage = result["usage"]
     print(
-        "Usage: "
-        f"{usage.get('prompt_tokens', 0):,} input, {usage.get('completion_tokens', 0):,} output, "
-        f"{usage.get('cached_input_tokens', 0):,} cached, {usage.get('reasoning_tokens', 0):,} reasoning"
+        "Tokens: "
+        f"{usage.get('prompt_tokens', 0):,} input | {usage.get('completion_tokens', 0):,} output | "
+        f"{usage.get('cached_input_tokens', 0):,} cached | {usage.get('reasoning_tokens', 0):,} reasoning"
     )
     print(f"Tool calls: {result['tool_calls']}")
-    if result["failed"]:
-        print("Failed execution accuracy:")
-        for db_id, names in sorted(result["failed"].items()):
-            print(f"  {db_id}: {', '.join(names)}")
+    failed = result["failed"]
+    if failed:
+        print(f"Failed execution accuracy: {sum(map(len, failed.values()))} across {len(failed)} database(s)")
+        if args.failures:
+            for db_id, names in sorted(failed.items()):
+                print(f"  {db_id}: {', '.join(names)}")
 
 
 if __name__ == "__main__":
