@@ -3,7 +3,7 @@
 This repository evaluates text-to-SQL models with [Verifiers](https://github.com/PrimeIntellect-ai/verifiers). It currently supports:
 
 - **Spider 1.0 dev** (1,034 questions): let the model inspect the database with tools.
-- **BIRD dev, 2024-06-27 snapshot** (1,534 questions): give the model the question and evidence, then let it inspect the database with tools.
+- **BIRD dev, 2025-11-06 cleaned release** (1,534 questions): give the model the question and evidence, then let it inspect the database with tools.
 
 In both environments, the model must return one SQLite query. The main reward runs that query against the benchmark database and compares its result with the gold query.
 
@@ -124,5 +124,3 @@ This repository does **not** calculate Spider Test Suite Accuracy, so its number
 ### BIRD
 
 - `execution_accuracy` is the reward. It compares the predicted and gold result rows as sets on the original database.
-
-The BIRD environment uses the 2024-06-27 dev snapshot downloaded by `scripts/download_bird.sh`, not the newer cleaned development split. Its scorer is implemented in this repository; do not assume direct comparability with current BIRD leaderboard submissions without checking the protocol.

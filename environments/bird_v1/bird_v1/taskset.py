@@ -56,7 +56,7 @@ class BirdTask(vf.Task[BirdData, vf.State, BirdTaskConfig]):
 
 class BirdConfig(vf.TasksetConfig):
     split: Literal["dev"] = "dev"
-    data_dir: Path = Path("data/bird/dev_20240627")
+    data_dir: Path = Path("data/bird/dev_20251106")
     task: BirdTaskConfig = BirdTaskConfig()
 
 

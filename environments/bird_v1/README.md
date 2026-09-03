@@ -12,7 +12,7 @@ Query results are limited to 100 rows. The model must finish with one SQLite que
 
 ## Dataset version
 
-The download script currently uses the `dev_20240627` snapshot from the `HAL-9001/bird-dev` mirror. This is the older 1,534-question development set, not BIRD's newer cleaned split.
+The download script uses BIRD's `dev_20251106` annotations from the official [`birdsql/bird_sql_dev_20251106`](https://huggingface.co/datasets/birdsql/bird_sql_dev_20251106) release.
 
 Downloaded files are stored under `data/bird/`. Their use remains subject to BIRD's upstream terms.
 
@@ -42,4 +42,4 @@ The scorer is implemented in this package rather than imported from BIRD's evalu
 ## Configuration
 
 - `env.taskset.split`: only `dev` is supported.
-- `env.taskset.data_dir`: extracted BIRD data directory; defaults to `data/bird/dev_20240627`.
+- `env.taskset.data_dir`: extracted BIRD data directory; defaults to `data/bird/dev_20251106`.
