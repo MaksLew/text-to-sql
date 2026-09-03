@@ -1,0 +1,10 @@
+.git/
+.jj/
+
+.agents/
+.pi/
+
+.venv/
+.ruff_cache/
+
+!.env
