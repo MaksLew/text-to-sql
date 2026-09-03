@@ -1,85 +1,130 @@
-# Spider schema-to-SQL evaluation
+# Text-to-SQL evaluation
 
-A native `verifiers.v1` taskset for zero-shot schema-to-SQL evaluation on the Spider 1.0 development split.
+This repository evaluates text-to-SQL models with [Verifiers](https://github.com/PrimeIntellect-ai/verifiers). It currently supports:
 
-The model receives the question and schema as `CREATE TABLE` statements. It has no database access and must return one SQLite query. The reward executes the prediction read-only and compares its result with the gold query on the original Spider database.
+- **Spider 1.0 dev** (1,034 questions): either give the model a serialized schema or let it inspect the database with tools.
+- **BIRD dev, 2024-06-27 snapshot** (1,534 questions): give the model the question and evidence, then let it inspect the database with tools.
+
+In both environments, the model must return one SQLite query. The main reward runs that query against the benchmark database and compares its result with the gold query.
 
 ## Setup
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then run:
+You need Python 3.11–3.13 and [uv](https://docs.astral.sh/uv/getting-started/installation/). The download scripts also use standard command-line tools such as `curl`, `unzip`, and `tar`.
 
 ```bash
-./scripts/setup.sh           # Spider (default)
-./scripts/setup.sh bird      # BIRD instead
-./scripts/setup.sh all       # both datasets
-uv run validate spider-v1 --runtime.type subprocess
+./scripts/setup.sh           # install dependencies and download Spider
+./scripts/setup.sh bird      # install dependencies and download BIRD
+./scripts/setup.sh all       # download both
 ```
 
-The setup script installs the pinned dependencies, applies the pinned-Verifiers workaround below, and downloads the selected dataset. Dataset files are ignored by Git. Spider is distributed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); BIRD is distributed under CC BY-NC 4.0.
+Dataset use remains subject to the upstream [Spider](https://yale-lily.github.io/spider) and [BIRD](https://bird-bench.github.io/) terms.
 
-### Verifiers UV bootstrap regression
+Check an environment before running a model:
 
-The pinned Verifiers revision unconditionally upgrades UV whenever it prepares a runtime script. With the local `subprocess` runtime this can repeatedly reinstall UV until harness setup times out. `scripts/setup.sh` applies the workaround automatically. For a manual setup, run it after `uv sync`:
+```bash
+uv run validate spider-v1 --runtime.type subprocess
+uv run validate bird-v1 --runtime.type subprocess
+```
+
+### Pinned Verifiers workaround
+
+This project pins Verifiers at commit `c51c094a4018471b7fdc873eb5cb55bbd5e956e1`. That revision can repeatedly reinstall uv while preparing a subprocess runtime, eventually causing setup to time out. `scripts/setup.sh` patches the local `.venv` after `uv sync` to avoid the reinstall.
+
+If you run `uv sync` yourself, apply the patch again:
 
 ```bash
 uv run python scripts/apply_verifiers_uv_patch.py
 ```
 
-The patch first reuses an installed UV that supports `uv sync --script`. It modifies the ignored `.venv`, so a clean environment or dependency reinstall may require applying it again. Remove this workaround after updating to a Verifiers revision containing the upstream fix.
+The patch only changes the ignored virtual environment. It can be removed when the pinned Verifiers revision includes the upstream fix.
 
-## Evaluate an API model
+## Run an API model
+
+Add your API key to the `.env` created during setup, then choose a config:
+
+| Config | Benchmark | What the model receives |
+| --- | --- | --- |
+| `configs/spider-openai.toml` | Spider | question and schema |
+| `configs/spider-agentic-openai.toml` | Spider | question and database tools |
+| `configs/bird-agentic-openai.toml` | BIRD | question, evidence, and database tools |
 
 ```bash
-# Put your real OPENAI_API_KEY in the .env created during setup
-
-# Check config without making model calls
+# Parse and resolve the config without calling the model
 uv run --env-file .env eval @ configs/spider-openai.toml --dry-run
 
-# Smoke test
+# Run three examples
 uv run --env-file .env eval @ configs/spider-openai.toml -n 3 --no-push
 
-# Full 1,034-example dev split
+# Run the full split
 uv run --env-file .env eval @ configs/spider-openai.toml --no-push
 ```
 
-Switch OpenAI models without changing the task:
+The checked-in API configs use OpenAI's API. To use another OpenAI-compatible endpoint, copy a config and change `model`, `client.base_url`, and `client.api_key_var`.
+
+You can also override the model from the command line:
 
 ```bash
-uv run eval @ configs/spider-openai.toml --model gpt-5.6-luna -n 3 --no-push
+uv run --env-file .env eval @ configs/spider-openai.toml \
+  --model gpt-5.6-luna -n 3 --no-push
 ```
 
-For another OpenAI-compatible API, override `model`, `client.base-url`, and `client.api-key-var` or copy the small TOML file.
+## Run Qwen3.5-4B with llama.cpp
 
-## Evaluate Qwen3.5-4B locally with llama.cpp
-
-llama.cpp loads **GGUF** files. Put the GGUF named by `MODEL_FILE` in `.env` under `models/` (`Qwen3.5-4B-M-TS-Q4_K_M.gguf` by default), then run:
+The local configs expect an OpenAI-compatible llama.cpp server at `http://localhost:8080/v1`. Put a compatible GGUF file in `models/`; the default filename is set in `.env` as `Qwen3.5-4B-M-TS-Q4_K_M.gguf`.
 
 ```bash
+mkdir -p models
+# Copy or download the GGUF to models/$MODEL_FILE first.
+
 docker compose -f compose.llama-cpp.yaml up -d
 curl http://localhost:8080/health
+
 uv run --env-file .env eval @ configs/spider-qwen3.5-4b-llama-cpp.toml --dry-run
 uv run --env-file .env eval @ configs/spider-qwen3.5-4b-llama-cpp.toml -n 3 --no-push
 ```
 
-Override CPU threads, context size, or a different GGUF filename without editing the Compose file:
+Available local configs:
+
+- `configs/spider-qwen3.5-4b-llama-cpp.toml`
+- `configs/spider-agentic-qwen3.5-4b-llama-cpp.toml`
+- `configs/bird-agentic-qwen3.5-4b-llama-cpp.toml`
+
+The Compose service disables model reasoning, serves one request at a time, and defaults to 8 CPU threads and an 8,192-token context. Override those settings when starting the server:
 
 ```bash
-THREADS=12 CONTEXT_SIZE=16384 MODEL_FILE=other.gguf docker compose -f compose.llama-cpp.yaml up -d
+THREADS=12 CONTEXT_SIZE=16384 MODEL_FILE=other.gguf \
+  docker compose -f compose.llama-cpp.yaml up -d
 ```
 
-The default server disables thinking for comparable SQL-only answers and runs one request at a time. The agentic variant is `configs/spider-agentic-qwen3.5-4b-llama-cpp.toml`.
+## Results
 
-Results are written under `outputs/` with the resolved config, traces, rewards, extracted SQL, and SQL errors. Print only a trace's conversation with:
+Evaluation runs are written under `outputs/`. Each run includes the resolved config, traces, and logs. The prediction and any SQLite error are stored in each trace's `info` field.
+
+Summarize a run:
+
+```bash
+scripts/summarize_run.py outputs/<run>
+scripts/summarize_run.py outputs/<run> --failures
+```
+
+Inspect one trace:
 
 ```bash
 scripts/show_trace.py outputs/<run>/traces.jsonl       # first trace
 scripts/show_trace.py outputs/<run>/traces.jsonl 4     # fifth trace
 ```
 
+## Scoring
 
-## Metrics
+### Spider
 
-- `execution_accuracy` (reward): result equivalence on the original Spider database.
-- `exact_set_match` (metric): Spider's structural Exact Set Match, using the pinned official evaluator downloaded by `scripts/download_spider.sh`.
+- `execution_accuracy` is the reward. It compares the predicted and gold results on the original database.
+- `exact_set_match` is an additional structural metric based on Spider's evaluator. It is not raw SQL string equality.
 
-Exact Set Match is not raw string equality. The official Spider leaderboard metric is Test Suite Accuracy, which is not yet calculated here.
+This repository does **not** calculate Spider Test Suite Accuracy, so its numbers should not be presented as official Spider leaderboard results.
+
+### BIRD
+
+- `execution_accuracy` is the reward. It compares the predicted and gold result rows as sets on the original database.
+
+The BIRD environment uses the 2024-06-27 dev snapshot downloaded by `scripts/download_bird.sh`, not the newer cleaned development split. Its scorer is implemented in this repository; do not assume direct comparability with current BIRD leaderboard submissions without checking the protocol.
