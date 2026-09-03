@@ -2,14 +2,7 @@
 
 A native `verifiers.v1` taskset for the 1,034-question Spider 1.0 development split.
 
-## Conditions
-
-| Condition | Model input | Database access |
-| --- | --- | --- |
-| `schema` | question and schema serialized as `CREATE TABLE` statements | none |
-| `agentic` | question | read-only database tools |
-
-The agentic condition provides three tools: list tables, show a table's `CREATE TABLE` statement, and run a read-only `SELECT` or `WITH` query. Query results are limited to 100 rows.
+The model receives the question and can inspect the database through three read-only tools: list tables, show a table's `CREATE TABLE` statement, and run a `SELECT` or `WITH` query. Query results are limited to 100 rows.
 
 The model must return one SQLite query. If the reply contains a SQL code block, the first block is extracted; otherwise the entire reply is treated as SQL.
 
@@ -27,14 +20,10 @@ The setup script downloads the Spider dev data and a pinned copy of Spider's eva
 ## Evaluation
 
 ```bash
-# Schema provided in the prompt
 uv run --env-file .env eval @ configs/spider-openai.toml -n 3 --no-push
-
-# Schema discovered through database tools
-uv run --env-file .env eval @ configs/spider-agentic-openai.toml -n 3 --no-push
 ```
 
-Equivalent llama.cpp configs are available in `configs/`.
+An equivalent llama.cpp config is available at `configs/spider-qwen3.5-4b-llama-cpp.toml`.
 
 ## Scoring
 
@@ -48,4 +37,3 @@ This taskset does not calculate Spider Test Suite Accuracy. Results are therefor
 - `env.taskset.split`: only `dev` is supported.
 - `env.taskset.data_dir`: Spider data directory; defaults to `data/spider_data`.
 - `env.taskset.evaluator_dir`: Spider evaluator directory; defaults to `data/test-suite-sql-eval`.
-- `env.taskset.task.condition`: `schema` or `agentic`.

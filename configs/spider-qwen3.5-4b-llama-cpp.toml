@@ -12,6 +12,9 @@ type = "eval"
 base_url = "http://localhost:8080/v1"
 api_key_var = "LLAMA_CPP_API_KEY"
 
+[env.timeout]
+episode = 300
+
 [env.taskset]
 id = "spider-v1"
 split = "dev"

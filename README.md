@@ -2,7 +2,7 @@
 
 This repository evaluates text-to-SQL models with [Verifiers](https://github.com/PrimeIntellect-ai/verifiers). It currently supports:
 
-- **Spider 1.0 dev** (1,034 questions): either give the model a serialized schema or let it inspect the database with tools.
+- **Spider 1.0 dev** (1,034 questions): let the model inspect the database with tools.
 - **BIRD dev, 2024-06-27 snapshot** (1,534 questions): give the model the question and evidence, then let it inspect the database with tools.
 
 In both environments, the model must return one SQLite query. The main reward runs that query against the benchmark database and compares its result with the gold query.
@@ -44,8 +44,7 @@ Add your API key to the `.env` created during setup, then choose a config:
 
 | Config | Benchmark | What the model receives |
 | --- | --- | --- |
-| `configs/spider-openai.toml` | Spider | question and schema |
-| `configs/spider-agentic-openai.toml` | Spider | question and database tools |
+| `configs/spider-openai.toml` | Spider | question and database tools |
 | `configs/bird-agentic-openai.toml` | BIRD | question, evidence, and database tools |
 
 ```bash
@@ -86,7 +85,6 @@ uv run --env-file .env eval @ configs/spider-qwen3.5-4b-llama-cpp.toml -n 3 --no
 Available local configs:
 
 - `configs/spider-qwen3.5-4b-llama-cpp.toml`
-- `configs/spider-agentic-qwen3.5-4b-llama-cpp.toml`
 - `configs/bird-agentic-qwen3.5-4b-llama-cpp.toml`
 
 The Compose service disables model reasoning, serves one request at a time, and defaults to 8 CPU threads and an 8,192-token context. Override those settings when starting the server:
