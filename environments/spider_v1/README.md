@@ -32,7 +32,7 @@ Override its model with `--model <model>`. For a local llama.cpp server, use the
 ## Scoring
 
 - `execution_accuracy` is the reward. It executes the predicted and gold queries on the original database and compares their results. Duplicate rows matter; row order matters when the gold query contains `ORDER BY`; equivalent output-column permutations are accepted.
-- `exact_set_match` is a structural metric based on Spider's evaluator. It does not contribute to the reward.
+- `exact_set_match` is a structural metric based on Spider's evaluator. Despite its name, it compares normalized clause-component sets—not exact SQL or ASTs—and ignores values, `DISTINCT`, aliases, foreign-key-equivalent columns, and some ordering details. It does not contribute to the reward.
 
 This taskset does not calculate Spider Test Suite Accuracy. Results are therefore not directly comparable with the current Spider leaderboard protocol.
 
