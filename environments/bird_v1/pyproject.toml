@@ -3,7 +3,7 @@ name = "bird-v1"
 version = "0.1.0"
 description = "Agentic BIRD dev text-to-SQL taskset."
 requires-python = ">=3.11"
-dependencies = ["verifiers"]
+dependencies = ["sqlglot>=30,<31", "verifiers"]
 
 [build-system]
 requires = ["hatchling"]

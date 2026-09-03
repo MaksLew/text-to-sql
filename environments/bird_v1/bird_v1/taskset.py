@@ -9,8 +9,11 @@ from typing import Literal
 import verifiers.v1 as vf
 
 from bird_v1.database_tools import DatabaseToolset
+from bird_v1.scoring import structural_exact_match
 
-SYSTEM_PROMPT = "You translate questions into SQLite queries. Return only the SQL query."
+SYSTEM_PROMPT = (
+    "You translate questions into SQLite queries. Return only the SQL query."
+)
 PROMPT = "Inspect the database with the available tools, then answer with only SQL."
 _FENCE = re.compile(r"```(?:sql)?\s*(.*?)```", re.IGNORECASE | re.DOTALL)
 
@@ -36,11 +39,21 @@ class BirdTask(vf.Task[BirdData, vf.State, BirdTaskConfig]):
     def key(self) -> str:
         return f"{self.data.split}:{self.data.idx}"
 
+    @vf.metric
+    async def structural_exact_match(self, trace: vf.Trace) -> float:
+        correct, error = await asyncio.to_thread(
+            structural_exact_match,
+            self.data.db_path,
+            self.data.gold_sql,
+            _extract_sql(trace.last_reply or ""),
+        )
+        if error:
+            trace.info["structural_exact_match_error"] = error
+        return float(correct)
+
     @vf.reward(weight=1.0)
     async def execution_accuracy(self, trace: vf.Trace) -> float:
-        reply = trace.last_reply or ""
-        match = _FENCE.search(reply)
-        predicted_sql = (match.group(1) if match else reply).strip().removesuffix(";").strip()
+        predicted_sql = _extract_sql(trace.last_reply or "")
         trace.info["predicted_sql"] = predicted_sql
         correct, error = await asyncio.to_thread(
             _execution_match, self.data.db_path, self.data.gold_sql, predicted_sql
@@ -51,7 +64,13 @@ class BirdTask(vf.Task[BirdData, vf.State, BirdTaskConfig]):
 
     async def validate(self, runtime: vf.Runtime) -> bool:
         await asyncio.to_thread(_execute, self.data.db_path, self.data.gold_sql)
-        return True
+        correct, _ = await asyncio.to_thread(
+            structural_exact_match,
+            self.data.db_path,
+            self.data.gold_sql,
+            self.data.gold_sql,
+        )
+        return correct
 
 
 class BirdConfig(vf.TasksetConfig):
@@ -99,6 +118,11 @@ class BirdTaskset(vf.Taskset[BirdTask, BirdConfig]):
         return tasks
 
 
+def _extract_sql(reply: str) -> str:
+    match = _FENCE.search(reply)
+    return (match.group(1) if match else reply).strip().removesuffix(";").strip()
+
+
 def _execute(db_path: str, sql: str) -> list[tuple]:
     if not sql:
         raise sqlite3.OperationalError("empty prediction")
@@ -113,7 +137,9 @@ def _execute(db_path: str, sql: str) -> list[tuple]:
         return connection.execute(sql).fetchall()
 
 
-def _execution_match(db_path: str, gold_sql: str, predicted_sql: str) -> tuple[bool, str | None]:
+def _execution_match(
+    db_path: str, gold_sql: str, predicted_sql: str
+) -> tuple[bool, str | None]:
     """Official BIRD execution accuracy: set equality of result rows."""
     try:
         gold = _execute(db_path, gold_sql)

@@ -41,7 +41,7 @@ Override its model with `--model <model>`. For a local llama.cpp server, use `co
 
 `execution_accuracy` is the only reward. It executes the predicted and gold queries once on the supplied SQLite database and compares their result rows as Python sets. Row order and duplicate counts are ignored.
 
-The scorer is implemented in this package rather than imported from BIRD's evaluation code.
+`structural_exact_match` is a diagnostic metric implemented with SQLGlot. It compares normalized SQLite syntax trees after ignoring literal values, `DISTINCT`, aliases, identifier quoting and casing, select/group and boolean-term order, explicit `INNER`, and foreign-key-equivalent columns. It is not an official BIRD metric.
 
 ## Configuration
 
