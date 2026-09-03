@@ -1,30 +1,23 @@
 # Text-to-SQL evaluation
 
-This repository evaluates text-to-SQL models with [Verifiers](https://github.com/PrimeIntellect-ai/verifiers). It currently supports:
+This repository evaluates text-to-SQL models with [Verifiers](https://github.com/PrimeIntellect-ai/verifiers). Models inspect SQLite databases through read-only tools and return a query whose result is compared with the benchmark's gold query.
 
-- **Spider 1.0 dev** (1,034 questions): let the model inspect the database with tools.
-- **BIRD dev, 2025-11-06 cleaned release** (1,534 questions): give the model the question and evidence, then let it inspect the database with tools.
+## Environments
 
-In both environments, the model must return one SQLite query. The main reward runs that query against the benchmark database and compares its result with the gold query.
+- [Spider 1.0](environments/spider_v1/README.md)
+- [BIRD](environments/bird_v1/README.md)
+
+Each environment README documents its dataset, tools, configuration and scoring behavior.
 
 ## Setup
 
 You need Python 3.11–3.13 and [uv](https://docs.astral.sh/uv/getting-started/installation/). The download scripts also use standard command-line tools such as `curl`, `unzip`, and `tar`.
 
 ```bash
-./scripts/setup.sh           # install dependencies and download Spider
-./scripts/setup.sh bird      # install dependencies and download BIRD
-./scripts/setup.sh all       # download both
+./scripts/setup.sh all
 ```
 
-Dataset use remains subject to the upstream [Spider](https://yale-lily.github.io/spider) and [BIRD](https://bird-bench.github.io/) terms.
-
-Check an environment before running a model:
-
-```bash
-uv run validate spider-v1 --runtime.type subprocess
-uv run validate bird-v1 --runtime.type subprocess
-```
+See the environment READMEs for benchmark-specific setup and validation commands. Dataset use remains subject to the upstream benchmark terms.
 
 ### Pinned Verifiers workaround
 
@@ -40,34 +33,22 @@ The patch only changes the ignored virtual environment. It can be removed when t
 
 ## Run an API model
 
-Add your API key to the `.env` created during setup, then choose a config:
-
-| Config | Benchmark | What the model receives |
-| --- | --- | --- |
-| `configs/spider-openai.toml` | Spider | question and database tools |
-| `configs/bird-agentic-openai.toml` | BIRD | question, evidence, and database tools |
+Add your API key to the `.env` created during setup, then use one of the configs documented by the chosen environment:
 
 ```bash
 # Parse and resolve the config without calling the model
-uv run --env-file .env eval @ configs/spider-openai.toml --dry-run
+uv run --env-file .env eval @ configs/<config>.toml --dry-run
 
 # Run three examples
-uv run --env-file .env eval @ configs/spider-openai.toml -n 3 --no-push
+uv run --env-file .env eval @ configs/<config>.toml -n 3 --no-push
 
 # Run the full split
-uv run --env-file .env eval @ configs/spider-openai.toml --no-push
+uv run --env-file .env eval @ configs/<config>.toml --no-push
 ```
 
-The checked-in API configs use OpenAI's API. To use another OpenAI-compatible endpoint, copy a config and change `model`, `client.base_url`, and `client.api_key_var`.
+The checked-in API configs use OpenAI's API. To use another OpenAI-compatible endpoint, copy a config and change `model`, `client.base_url`, and `client.api_key_var`. You can also override the model with `--model <model>`.
 
-You can also override the model from the command line:
-
-```bash
-uv run --env-file .env eval @ configs/spider-openai.toml \
-  --model gpt-5.6-luna -n 3 --no-push
-```
-
-## Run Qwen3.5-4B with llama.cpp
+## Run a local model with llama.cpp
 
 The local configs expect an OpenAI-compatible llama.cpp server at `http://localhost:8080/v1`. Put a compatible GGUF file in `models/`; the default filename is set in `.env` as `Qwen3.5-4B-M-TS-Q4_K_M.gguf`.
 
@@ -77,15 +58,7 @@ mkdir -p models
 
 docker compose -f compose.llama-cpp.yaml up -d
 curl http://localhost:8080/health
-
-uv run --env-file .env eval @ configs/spider-qwen3.5-4b-llama-cpp.toml --dry-run
-uv run --env-file .env eval @ configs/spider-qwen3.5-4b-llama-cpp.toml -n 3 --no-push
 ```
-
-Available local configs:
-
-- `configs/spider-qwen3.5-4b-llama-cpp.toml`
-- `configs/bird-agentic-qwen3.5-4b-llama-cpp.toml`
 
 The Compose service disables model reasoning, serves one request at a time, and defaults to 8 CPU threads and an 8,192-token context. Override those settings when starting the server:
 
@@ -93,6 +66,8 @@ The Compose service disables model reasoning, serves one request at a time, and 
 THREADS=12 CONTEXT_SIZE=16384 MODEL_FILE=other.gguf \
   docker compose -f compose.llama-cpp.yaml up -d
 ```
+
+Use the local config listed in the chosen environment's README.
 
 ## Results
 
@@ -111,16 +86,3 @@ Inspect one trace:
 scripts/show_trace.py outputs/<run>/traces.jsonl       # first trace
 scripts/show_trace.py outputs/<run>/traces.jsonl 4     # fifth trace
 ```
-
-## Scoring
-
-### Spider
-
-- `execution_accuracy` is the reward. It compares the predicted and gold results on the original database.
-- `exact_set_match` is an additional structural metric based on Spider's evaluator. It is not raw SQL string equality.
-
-This repository does **not** calculate Spider Test Suite Accuracy, so its numbers should not be presented as official Spider leaderboard results.
-
-### BIRD
-
-- `execution_accuracy` is the reward. It compares the predicted and gold result rows as sets on the original database.

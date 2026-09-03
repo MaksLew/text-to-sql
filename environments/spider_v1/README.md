@@ -19,11 +19,15 @@ The setup script downloads the Spider dev data and a pinned copy of Spider's eva
 
 ## Evaluation
 
+The API config gives the model the question and database tools:
+
 ```bash
+uv run --env-file .env eval @ configs/spider-openai.toml --dry-run
 uv run --env-file .env eval @ configs/spider-openai.toml -n 3 --no-push
+uv run --env-file .env eval @ configs/spider-openai.toml --no-push
 ```
 
-An equivalent llama.cpp config is available at `configs/spider-qwen3.5-4b-llama-cpp.toml`.
+Override its model with `--model <model>`. For a local llama.cpp server, use the equivalent `configs/spider-qwen3.5-4b-llama-cpp.toml` config.
 
 ## Scoring
 
