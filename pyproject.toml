@@ -2,11 +2,12 @@
 name = "text-to-sql-thesis"
 version = "0.1.0"
 requires-python = ">=3.11,<3.14"
-dependencies = ["spider-v1"]
+dependencies = ["bird-v1", "spider-v1"]
 
 [tool.uv.sources]
+bird-v1 = { workspace = true }
 spider-v1 = { workspace = true }
 verifiers = { git = "https://github.com/PrimeIntellect-ai/verifiers.git", rev = "c51c094a4018471b7fdc873eb5cb55bbd5e956e1" }
 
 [tool.uv.workspace]
-members = ["environments/spider_v1"]
+members = ["environments/bird_v1", "environments/spider_v1"]

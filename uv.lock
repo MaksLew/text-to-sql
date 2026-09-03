@@ -12,6 +12,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "bird-v1",
     "spider-v1",
     "text-to-sql-thesis",
 ]
@@ -199,6 +200,17 @@ sdist = { url = "https://files.pythonhosted.org/packages/9a/8e/82a0fe20a541c0314
 wheels = [
     { url = "https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl", hash = "sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309", size = 67548, upload-time = "2026-03-19T14:22:23.645Z" },
 ]
+
+[[package]]
+name = "bird-v1"
+version = "0.1.0"
+source = { editable = "environments/bird_v1" }
+dependencies = [
+    { name = "verifiers" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "verifiers", git = "https://github.com/PrimeIntellect-ai/verifiers.git?rev=c51c094a4018471b7fdc873eb5cb55bbd5e956e1" }]
 
 [[package]]
 name = "certifi"
@@ -2215,11 +2227,15 @@ name = "text-to-sql-thesis"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "bird-v1" },
     { name = "spider-v1" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "spider-v1", editable = "environments/spider_v1" }]
+requires-dist = [
+    { name = "bird-v1", editable = "environments/bird_v1" },
+    { name = "spider-v1", editable = "environments/spider_v1" },
+]
 
 [[package]]
 name = "tiktoken"

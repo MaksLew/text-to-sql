@@ -6,17 +6,20 @@ The model receives the question and schema as `CREATE TABLE` statements. It has 
 
 ## Setup
 
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then run:
+
 ```bash
-uv sync
-./scripts/download_spider.sh
+./scripts/setup.sh           # Spider (default)
+./scripts/setup.sh bird      # BIRD instead
+./scripts/setup.sh all       # both datasets
 uv run validate spider-v1 --runtime.type subprocess
 ```
 
-The download script retrieves the official Spider release and keeps only the 20 databases used by the development split. Dataset files are ignored by Git and remain under `data/spider_data/`. Spider is distributed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+The setup script installs the pinned dependencies, applies the pinned-Verifiers workaround below, and downloads the selected dataset. Dataset files are ignored by Git. Spider is distributed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); BIRD is distributed under CC BY-NC 4.0.
 
 ### Verifiers UV bootstrap regression
 
-The pinned Verifiers revision unconditionally upgrades UV whenever it prepares a runtime script. With the local `subprocess` runtime this can repeatedly reinstall UV until harness setup times out. If setup stalls or reports `HarnessError: harness setup timed out`, apply the included workaround after `uv sync`:
+The pinned Verifiers revision unconditionally upgrades UV whenever it prepares a runtime script. With the local `subprocess` runtime this can repeatedly reinstall UV until harness setup times out. `scripts/setup.sh` applies the workaround automatically. For a manual setup, run it after `uv sync`:
 
 ```bash
 uv run python scripts/apply_verifiers_uv_patch.py
@@ -27,8 +30,7 @@ The patch first reuses an installed UV that supports `uv sync --script`. It modi
 ## Evaluate an API model
 
 ```bash
-cp .env.example .env
-# Put your real OPENAI_API_KEY in .env
+# Put your real OPENAI_API_KEY in the .env created during setup
 
 # Check config without making model calls
 uv run --env-file .env eval @ configs/spider-openai.toml --dry-run
@@ -50,10 +52,9 @@ For another OpenAI-compatible API, override `model`, `client.base-url`, and `cli
 
 ## Evaluate Qwen3.5-4B locally with llama.cpp
 
-llama.cpp loads **GGUF** files. Put `Qwen3.5-4B-M-TS-Q4_K_M.gguf` in `models/` (Q4_K_M is the sensible CPU starting point), then run:
+llama.cpp loads **GGUF** files. Put the GGUF named by `MODEL_FILE` in `.env` under `models/` (`Qwen3.5-4B-M-TS-Q4_K_M.gguf` by default), then run:
 
 ```bash
-cp .env.example .env  # or add LLAMA_CPP_API_KEY=local to the existing file
 docker compose -f compose.llama-cpp.yaml up -d
 curl http://localhost:8080/health
 uv run --env-file .env eval @ configs/spider-qwen3.5-4b-llama-cpp.toml --dry-run
