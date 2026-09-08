@@ -71,18 +71,25 @@ Use the local config listed in the chosen environment's README.
 
 ## Results
 
-Evaluation runs are written under `outputs/`. Each run includes the resolved config, traces, and logs. The prediction and any SQLite error are stored in each trace's `info` field.
+Evaluation runs are initially written as flat directories under `outputs/`. Clean the directory by categorizing completed eval runs by environment and model and removing validation runs:
+
+```bash
+scripts/clean_outputs.py --dry-run
+scripts/clean_outputs.py
+```
+
+This produces `outputs/<environment>/<model>/<run-id>/`. Other directories are left untouched. Each run includes the resolved config, traces, and logs. The prediction and any SQLite error are stored in each trace's `info` field.
 
 Summarize a run:
 
 ```bash
-scripts/summarize_run.py outputs/<run>
-scripts/summarize_run.py outputs/<run> --failures
+scripts/summarize_run.py outputs/<environment>/<model>/<run-id>
+scripts/summarize_run.py outputs/<environment>/<model>/<run-id> --failures
 ```
 
 Inspect one trace:
 
 ```bash
-scripts/show_trace.py outputs/<run>/traces.jsonl       # first trace
-scripts/show_trace.py outputs/<run>/traces.jsonl 4     # fifth trace
+scripts/show_trace.py outputs/<environment>/<model>/<run-id>/traces.jsonl       # first trace
+scripts/show_trace.py outputs/<environment>/<model>/<run-id>/traces.jsonl 4     # fifth trace
 ```
