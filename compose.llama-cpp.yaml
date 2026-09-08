@@ -15,10 +15,14 @@ services:
       - --port
       - "8080"
       - --ctx-size
-      - "${CONTEXT_SIZE:-8192}"
+      - "${CONTEXT_SIZE:-16384}"
       - --threads
       - "${THREADS:-8}"
       - --parallel
       - "1"
       - --reasoning
-      - "off"
+      - "on"
+      - --reasoning-budget
+      - "256"
+      - --reasoning-format
+      - deepseek

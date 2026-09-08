@@ -4,6 +4,7 @@ max_concurrent = 8
 push = false
 
 [sampling]
+temperature = 0.0
 reasoning_effort = "none"
 
 [client]

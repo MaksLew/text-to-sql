@@ -60,7 +60,7 @@ docker compose -f compose.llama-cpp.yaml up -d
 curl http://localhost:8080/health
 ```
 
-The Compose service disables model reasoning, serves one request at a time, and defaults to 8 CPU threads and an 8,192-token context. Override those settings when starting the server:
+The Compose service enables model reasoning, serves one request at a time, and defaults to 8 CPU threads and a 16,384-token context. Override those settings when starting the server:
 
 ```bash
 THREADS=12 CONTEXT_SIZE=16384 MODEL_FILE=other.gguf \
