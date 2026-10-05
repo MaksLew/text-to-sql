@@ -1,18 +1,12 @@
-import importlib
 import re
 import sqlite3
-import sys
 import time
 from collections import Counter
-from functools import cache
 from itertools import product
 from pathlib import Path
 
 _FENCE = re.compile(r"```(?:sql)?\s*(.*?)```", re.IGNORECASE | re.DOTALL)
 _ORDER_BY = re.compile(r"\border\s+by\b", re.IGNORECASE)
-_QUOTED = re.compile(r'"([^"]+)"')
-_OUTPUT_ALIAS = re.compile(r"\s+AS\s+(?:\"[^\"]+\"|[A-Za-z_]\w*)\s*$", re.IGNORECASE)
-_FROM = re.compile(r"\bFROM\b", re.IGNORECASE)
 
 
 def extract_sql(reply: str) -> str:
@@ -42,7 +36,11 @@ def _results_equal(gold: list[tuple], predicted: list[tuple], ordered: bool) -> 
 
     columns = len(gold[0])
     candidates = [
-        [j for j in range(columns) if {row[i] for row in gold} == {row[j] for row in predicted}]
+        [
+            j
+            for j in range(columns)
+            if {row[i] for row in gold} == {row[j] for row in predicted}
+        ]
         for i in range(columns)
     ]
     for permutation in product(*candidates):
@@ -54,96 +52,9 @@ def _results_equal(gold: list[tuple], predicted: list[tuple], ordered: bool) -> 
     return False
 
 
-@cache
-def _load_spider_evaluator(evaluator_dir: str):
-    root = Path(evaluator_dir).resolve()
-    if not (root / "evaluation.py").is_file():
-        raise FileNotFoundError(
-            f"Spider evaluator not found at {root}; run scripts/download_spider.sh"
-        )
-
-    # The official evaluator uses absolute imports, so reject conflicting modules
-    # rather than silently loading code from another evaluator directory.
-    for name in ("evaluation", "process_sql", "exec_eval", "parse"):
-        module = sys.modules.get(name)
-        expected = (root / f"{name}.py").resolve()
-        loaded = getattr(module, "__file__", None) if module else None
-        if module and (not loaded or Path(loaded).resolve() != expected):
-            source = Path(loaded).resolve() if loaded else "an unknown location"
-            raise RuntimeError(
-                f"cannot load Spider evaluator from {root}: {name!r} is already "
-                f"loaded from {source}"
-            )
-
-    sys.path.insert(0, str(root))
-    try:
-        return importlib.import_module("evaluation")
-    finally:
-        sys.path.remove(str(root))
-
-
-@cache
-def _foreign_key_maps(evaluator_dir: str, tables_path: str) -> dict:
-    return _load_spider_evaluator(evaluator_dir).build_foreign_key_map_from_json(
-        tables_path
-    )
-
-
-def _normalize_for_spider(sql: str, schema: dict[str, list[str]]) -> str:
-    """Remove syntax the official parser rejects without changing SQL meaning."""
-    identifiers = {name.lower() for table, columns in schema.items() for name in (table, *columns)}
-    sql = _QUOTED.sub(
-        lambda match: match.group(1) if match.group(1).lower() in identifiers else match.group(0),
-        sql,
-    )
-
-    # The official parser ignores output aliases semantically but cannot parse them.
-    from_match = _FROM.search(sql)
-    if from_match:
-        select = ",".join(
-            _OUTPUT_ALIAS.sub("", item) for item in sql[: from_match.start()].split(",")
-        )
-        sql = f"{select} {sql[from_match.start():]}"
-    return sql
-
-
-def exact_set_match(
-    evaluator_dir: str,
-    tables_path: str,
-    db_id: str,
-    db_path: str,
-    gold_sql: str,
-    predicted_sql: str,
+def execution_match(
+    db_path: str, gold_sql: str, predicted_sql: str
 ) -> tuple[bool, str | None]:
-    """Spider's structural exact-set-match metric (values and DISTINCT ignored)."""
-    if not predicted_sql:
-        return False, "empty prediction"
-    evaluator = _load_spider_evaluator(evaluator_dir)
-    try:
-        raw_schema = evaluator.get_schema(db_path)
-        predicted_sql = _normalize_for_spider(predicted_sql, raw_schema)
-        schema = evaluator.Schema(raw_schema)
-        gold = evaluator.get_sql(schema, gold_sql)
-        predicted = evaluator.get_sql(schema, predicted_sql)
-        key_map = _foreign_key_maps(evaluator_dir, tables_path)[db_id]
-        gold_columns = evaluator.build_valid_col_units(
-            gold["from"]["table_units"], schema
-        )
-        predicted_columns = evaluator.build_valid_col_units(
-            predicted["from"]["table_units"], schema
-        )
-        gold = evaluator.rebuild_sql_col(
-            gold_columns, evaluator.rebuild_sql_val(gold), key_map
-        )
-        predicted = evaluator.rebuild_sql_col(
-            predicted_columns, evaluator.rebuild_sql_val(predicted), key_map
-        )
-        return bool(evaluator.Evaluator().eval_exact_match(predicted, gold)), None
-    except Exception as error:
-        return False, str(error)
-
-
-def execution_match(db_path: str, gold_sql: str, predicted_sql: str) -> tuple[bool, str | None]:
     if not predicted_sql:
         return False, "empty prediction"
     try:

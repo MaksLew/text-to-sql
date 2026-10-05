@@ -6,7 +6,7 @@ from typing import Literal
 import verifiers.v1 as vf
 
 from spider_v1.tools import Toolset
-from spider_v1.scoring import exact_set_match, execution_match, extract_sql
+from spider_v1.scoring import execution_match, extract_sql
 
 SYSTEM_PROMPT = "You translate questions into SQLite queries. Return only the SQL query."
 AGENTIC_PROMPT = "Inspect the database with the available tools, then answer with only SQL."
@@ -16,8 +16,6 @@ class TaskData(vf.TaskData):
     split: str
     db_id: str
     db_path: str
-    tables_path: str
-    evaluator_dir: str
     gold_sql: str
 
 
@@ -34,22 +32,6 @@ class Task(vf.Task[TaskData, vf.State, TaskConfig]):
     def key(self) -> str:
         return f"{self.data.split}:{self.data.idx}"
 
-    @vf.metric
-    async def exact_set_match(self, trace: vf.Trace) -> float:
-        predicted_sql = extract_sql(trace.last_reply or "")
-        correct, error = await asyncio.to_thread(
-            exact_set_match,
-            self.data.evaluator_dir,
-            self.data.tables_path,
-            self.data.db_id,
-            self.data.db_path,
-            self.data.gold_sql,
-            predicted_sql,
-        )
-        if error:
-            trace.info["exact_set_match_error"] = error
-        return float(correct)
-
     @vf.reward(weight=1.0)
     async def execution_accuracy(self, trace: vf.Trace) -> float:
         predicted_sql = extract_sql(trace.last_reply or "")
@@ -62,25 +44,15 @@ class Task(vf.Task[TaskData, vf.State, TaskConfig]):
         return float(correct)
 
     async def validate(self, runtime: vf.Runtime) -> bool:
-        execution_correct, _ = await asyncio.to_thread(
+        correct, _ = await asyncio.to_thread(
             execution_match, self.data.db_path, self.data.gold_sql, self.data.gold_sql
         )
-        exact_correct, _ = await asyncio.to_thread(
-            exact_set_match,
-            self.data.evaluator_dir,
-            self.data.tables_path,
-            self.data.db_id,
-            self.data.db_path,
-            self.data.gold_sql,
-            self.data.gold_sql,
-        )
-        return execution_correct and exact_correct
+        return correct
 
 
 class TasksetConfig(vf.TasksetConfig):
     split: Literal["dev"] = "dev"
     data_dir: Path = Path("data/spider_data")
-    evaluator_dir: Path = Path("data/test-suite-sql-eval")
     task: TaskConfig = TaskConfig()
 
 
@@ -88,16 +60,9 @@ class Taskset(vf.Taskset[Task, TasksetConfig]):  # ty: ignore[invalid-type-argum
     def load(self) -> list[Task]:
         root = self.config.data_dir.resolve()
         rows_path = root / f"{self.config.split}.json"
-        tables_path = root / "tables.json"
-        evaluator_dir = self.config.evaluator_dir.resolve()
-        if not rows_path.is_file() or not tables_path.is_file():
+        if not rows_path.is_file():
             raise FileNotFoundError(
                 f"Spider data not found at {root}; run scripts/download_spider.sh"
-            )
-        if not (evaluator_dir / "evaluation.py").is_file():
-            raise FileNotFoundError(
-                f"Spider evaluator not found at {evaluator_dir}; "
-                "run scripts/download_spider.sh"
             )
 
         rows = json.loads(rows_path.read_text())
@@ -118,8 +83,6 @@ class Taskset(vf.Taskset[Task, TasksetConfig]):  # ty: ignore[invalid-type-argum
                         split=self.config.split,
                         db_id=db_id,
                         db_path=str(db_path),
-                        tables_path=str(tables_path),
-                        evaluator_dir=str(evaluator_dir),
                         gold_sql=row["query"],
                     ),
                     self.config.task,

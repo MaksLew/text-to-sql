@@ -15,7 +15,7 @@ scripts/setup.sh spider
 uv run validate spider-v1 --runtime.type subprocess
 ```
 
-The setup script downloads the Spider dev data and a pinned copy of Spider's evaluator. Both are stored under `data/`.
+The setup script downloads the Spider dev data under `data/`.
 
 ## Evaluation
 
@@ -31,13 +31,9 @@ Override its model with `--model <model>`. For a local llama.cpp server, use the
 
 ## Scoring
 
-- `execution_accuracy` is the reward. It executes the predicted and gold queries on the original database and compares their results. Duplicate rows matter; row order matters when the gold query contains `ORDER BY`; equivalent output-column permutations are accepted.
-- `exact_set_match` is a structural metric based on Spider's evaluator. Despite its name, it compares normalized clause-component sets—not exact SQL or ASTs—and ignores values, `DISTINCT`, aliases, foreign-key-equivalent columns, and some ordering details. It does not contribute to the reward.
-
-This taskset does not calculate Spider Test Suite Accuracy. Results are therefore not directly comparable with the current Spider leaderboard protocol.
+`execution_accuracy` is the only task score. It executes the predicted and gold queries on the original database and compares their results. Duplicate rows matter; row order matters when the gold query contains `ORDER BY`; equivalent output-column permutations are accepted.
 
 ## Configuration
 
 - `env.taskset.split`: only `dev` is supported.
 - `env.taskset.data_dir`: Spider data directory; defaults to `data/spider_data`.
-- `env.taskset.evaluator_dir`: Spider evaluator directory; defaults to `data/test-suite-sql-eval`.

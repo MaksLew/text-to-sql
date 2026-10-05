@@ -9,7 +9,6 @@ from typing import Literal
 import verifiers.v1 as vf
 
 from bird_v1.tools import Toolset
-from bird_v1.scoring import structural_exact_match
 
 SYSTEM_PROMPT = (
     "You translate questions into SQLite queries. Return only the SQL query."
@@ -39,18 +38,6 @@ class Task(vf.Task[TaskData, vf.State, TaskConfig]):
     def key(self) -> str:
         return f"{self.data.split}:{self.data.idx}"
 
-    @vf.metric
-    async def structural_exact_match(self, trace: vf.Trace) -> float:
-        correct, error = await asyncio.to_thread(
-            structural_exact_match,
-            self.data.db_path,
-            self.data.gold_sql,
-            _extract_sql(trace.last_reply or ""),
-        )
-        if error:
-            trace.info["structural_exact_match_error"] = error
-        return float(correct)
-
     @vf.reward(weight=1.0)
     async def execution_accuracy(self, trace: vf.Trace) -> float:
         predicted_sql = _extract_sql(trace.last_reply or "")
@@ -64,13 +51,7 @@ class Task(vf.Task[TaskData, vf.State, TaskConfig]):
 
     async def validate(self, runtime: vf.Runtime) -> bool:
         await asyncio.to_thread(_execute, self.data.db_path, self.data.gold_sql)
-        correct, _ = await asyncio.to_thread(
-            structural_exact_match,
-            self.data.db_path,
-            self.data.gold_sql,
-            self.data.gold_sql,
-        )
-        return correct
+        return True
 
 
 class TasksetConfig(vf.TasksetConfig):

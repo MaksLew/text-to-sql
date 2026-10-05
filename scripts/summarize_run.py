@@ -49,13 +49,6 @@ def summarize(path: Path) -> dict:
         "episode_errors": sum(bool(episode.get("errors")) for episode in episodes),
         "trace_errors": sum(bool(trace.get("errors")) for trace in traces),
         "sql_errors": sum("sql_error" in trace.get("info", {}) for trace in traces),
-        "metric_errors": sum(
-            any(
-                name in {"exact_set_match_error", "structural_exact_match_error"}
-                for name in trace.get("info", {})
-            )
-            for trace in traces
-        ),
         "usage": usage,
         "tool_calls": sum(
             node.get("message", {}).get("role") == "tool"
@@ -97,7 +90,7 @@ def main() -> None:
     print(
         "Errors: "
         f"{result['episode_errors']} episode | {result['trace_errors']} trace | "
-        f"{result['sql_errors']} SQL | {result['metric_errors']} metric parser"
+        f"{result['sql_errors']} SQL"
     )
     usage = result["usage"]
     print(
