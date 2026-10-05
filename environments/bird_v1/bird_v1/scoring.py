@@ -21,7 +21,7 @@ def structural_exact_match(
         return False, str(error)
 
 
-def _normalize(db_path: str, sql: str) -> exp.Expression:
+def _normalize(db_path: str, sql: str) -> exp.Expr:
     expression = qualify(
         sqlglot.parse_one(sql, read="sqlite"),
         dialect="sqlite",
@@ -98,7 +98,7 @@ def _normalize(db_path: str, sql: str) -> exp.Expression:
 
 
 @cache
-def _schema(db_path: str) -> dict[str, dict[str, str]]:
+def _schema(db_path: str) -> dict[str, object]:
     with sqlite3.connect(db_path) as connection:
         tables = [
             row[0]
