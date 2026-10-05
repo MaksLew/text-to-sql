@@ -5,14 +5,14 @@ from typing import Literal
 
 import verifiers.v1 as vf
 
-from spider_v1.database_tools import DatabaseToolset
+from spider_v1.tools import Toolset
 from spider_v1.scoring import exact_set_match, execution_match, extract_sql
 
 SYSTEM_PROMPT = "You translate questions into SQLite queries. Return only the SQL query."
 AGENTIC_PROMPT = "Inspect the database with the available tools, then answer with only SQL."
 
 
-class SpiderData(vf.TaskData):
+class TaskData(vf.TaskData):
     split: str
     db_id: str
     db_path: str
@@ -21,14 +21,14 @@ class SpiderData(vf.TaskData):
     gold_sql: str
 
 
-class SpiderTaskConfig(vf.TaskConfig):
+class TaskConfig(vf.TaskConfig):
     tools: vf.ToolsetConfig = vf.ToolsetConfig()
 
 
-class SpiderTask(vf.Task[SpiderData, vf.State, SpiderTaskConfig]):
+class Task(vf.Task[TaskData, vf.State, TaskConfig]):
     @classmethod
-    def toolsets(cls, config: SpiderTaskConfig) -> list[vf.Toolset]:
-        return [DatabaseToolset(config.tools)]
+    def toolsets(cls, config: TaskConfig) -> list[vf.Toolset]:
+        return [Toolset(config.tools)]
 
     @property
     def key(self) -> str:
@@ -77,15 +77,15 @@ class SpiderTask(vf.Task[SpiderData, vf.State, SpiderTaskConfig]):
         return execution_correct and exact_correct
 
 
-class SpiderConfig(vf.TasksetConfig):
+class TasksetConfig(vf.TasksetConfig):
     split: Literal["dev"] = "dev"
     data_dir: Path = Path("data/spider_data")
     evaluator_dir: Path = Path("data/test-suite-sql-eval")
-    task: SpiderTaskConfig = SpiderTaskConfig()
+    task: TaskConfig = TaskConfig()
 
 
-class SpiderTaskset(vf.Taskset[SpiderTask, SpiderConfig]):
-    def load(self) -> list[SpiderTask]:
+class Taskset(vf.Taskset[Task, TasksetConfig]):  # ty: ignore[invalid-type-arguments]
+    def load(self) -> list[Task]:
         root = self.config.data_dir.resolve()
         rows_path = root / f"{self.config.split}.json"
         tables_path = root / "tables.json"
@@ -109,8 +109,8 @@ class SpiderTaskset(vf.Taskset[SpiderTask, SpiderConfig]):
                 raise FileNotFoundError(db_path)
             prompt = f"{AGENTIC_PROMPT}\n\nQuestion: {row['question']}"
             tasks.append(
-                SpiderTask(
-                    SpiderData(
+                Task(
+                    TaskData(
                         idx=idx,
                         name=f"{self.config.split}-{idx}",
                         prompt=prompt,

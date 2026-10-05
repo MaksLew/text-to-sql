@@ -8,7 +8,7 @@ from typing import Literal
 
 import verifiers.v1 as vf
 
-from bird_v1.database_tools import DatabaseToolset
+from bird_v1.tools import Toolset
 from bird_v1.scoring import structural_exact_match
 
 SYSTEM_PROMPT = (
@@ -18,7 +18,7 @@ PROMPT = "Inspect the database with the available tools, then answer with only S
 _FENCE = re.compile(r"```(?:sql)?\s*(.*?)```", re.IGNORECASE | re.DOTALL)
 
 
-class BirdData(vf.TaskData):
+class TaskData(vf.TaskData):
     split: str
     db_id: str
     db_path: str
@@ -26,14 +26,14 @@ class BirdData(vf.TaskData):
     difficulty: str
 
 
-class BirdTaskConfig(vf.TaskConfig):
+class TaskConfig(vf.TaskConfig):
     tools: vf.ToolsetConfig = vf.ToolsetConfig()
 
 
-class BirdTask(vf.Task[BirdData, vf.State, BirdTaskConfig]):
+class Task(vf.Task[TaskData, vf.State, TaskConfig]):
     @classmethod
-    def toolsets(cls, config: BirdTaskConfig) -> list[vf.Toolset]:
-        return [DatabaseToolset(config.tools)]
+    def toolsets(cls, config: TaskConfig) -> list[vf.Toolset]:
+        return [Toolset(config.tools)]
 
     @property
     def key(self) -> str:
@@ -73,20 +73,20 @@ class BirdTask(vf.Task[BirdData, vf.State, BirdTaskConfig]):
         return correct
 
 
-class BirdConfig(vf.TasksetConfig):
+class TasksetConfig(vf.TasksetConfig):
     split: Literal["dev"] = "dev"
     data_dir: Path = Path("data/bird/dev_20251106")
-    task: BirdTaskConfig = BirdTaskConfig()
+    task: TaskConfig = TaskConfig()
 
 
-class BirdTaskset(vf.Taskset[BirdTask, BirdConfig]):
-    def load(self) -> list[BirdTask]:
+class Taskset(vf.Taskset[Task, TasksetConfig]):  # ty: ignore[invalid-type-arguments]
+    def load(self) -> list[Task]:
         root = self.config.data_dir.resolve()
         rows_path = root / f"{self.config.split}.json"
         databases = root / f"{self.config.split}_databases"
         if not rows_path.is_file() or not databases.is_dir():
             raise FileNotFoundError(
-                f"BIRD data not found at {root}; run scripts/download_bird.sh"
+                f"Data not found at {root}; run scripts/download_bird.sh"
             )
 
         tasks = []
@@ -97,8 +97,8 @@ class BirdTaskset(vf.Taskset[BirdTask, BirdConfig]):
                 raise FileNotFoundError(db_path)
             evidence = row.get("evidence") or "None provided."
             tasks.append(
-                BirdTask(
-                    BirdData(
+                Task(
+                    TaskData(
                         idx=idx,
                         name=f"{self.config.split}-{idx}",
                         prompt=(

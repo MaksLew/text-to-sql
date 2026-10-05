@@ -1,3 +1,3 @@
-from bird_v1.taskset import BirdTaskset
+from bird_v1.taskset import Taskset
 
-__all__ = ["BirdTaskset"]
+__all__ = ["Taskset"]

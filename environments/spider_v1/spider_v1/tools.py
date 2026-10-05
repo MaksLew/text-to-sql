@@ -5,7 +5,7 @@ from pathlib import Path
 import verifiers.v1 as vf
 
 
-class DatabaseToolset(vf.Toolset[vf.ToolsetConfig]):
+class Toolset(vf.Toolset[vf.ToolsetConfig]):
     TOOL_PREFIX = "database"
 
     async def setup_task(self, task) -> None:
@@ -64,4 +64,4 @@ class DatabaseToolset(vf.Toolset[vf.ToolsetConfig]):
 
 
 if __name__ == "__main__":
-    DatabaseToolset.run()
+    Toolset.run()

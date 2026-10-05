@@ -1,3 +1,3 @@
-from spider_v1.taskset import SpiderTaskset
+from spider_v1.taskset import Taskset
 
-__all__ = ["SpiderTaskset"]
+__all__ = ["Taskset"]
