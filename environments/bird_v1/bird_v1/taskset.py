@@ -10,10 +10,10 @@ import verifiers.v1 as vf
 
 from bird_v1.tools import Toolset
 
-SYSTEM_PROMPT = (
-    "You translate questions into SQLite queries. Return only the SQL query."
+PROMPT = (
+    "You translate questions into SQLite queries. "
+    "Inspect the database with the available tools, then return only the SQL query."
 )
-PROMPT = "Inspect the database with the available tools, then answer with only SQL."
 _FENCE = re.compile(r"```(?:sql)?\s*(.*?)```", re.IGNORECASE | re.DOTALL)
 
 
@@ -86,7 +86,6 @@ class Taskset(vf.Taskset[Task, TasksetConfig]):  # ty: ignore[invalid-type-argum
                             f"{PROMPT}\n\nEvidence: {evidence}\n\n"
                             f"Question: {row['question']}"
                         ),
-                        system_prompt=SYSTEM_PROMPT,
                         split=self.config.split,
                         db_id=db_id,
                         db_path=str(db_path),

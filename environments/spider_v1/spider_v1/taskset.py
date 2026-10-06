@@ -12,8 +12,10 @@ import verifiers.v1 as vf
 
 from spider_v1.tools import Toolset
 
-SYSTEM_PROMPT = "You translate questions into SQLite queries. Return only the SQL query."
-AGENTIC_PROMPT = "Inspect the database with the available tools, then answer with only SQL."
+PROMPT = (
+    "You translate questions into SQLite queries. "
+    "Inspect the database with the available tools, then return only the SQL query."
+)
 _FENCE = re.compile(r"```(?:sql)?\s*(.*?)```", re.IGNORECASE | re.DOTALL)
 _ORDER_BY = re.compile(r"\border\s+by\b", re.IGNORECASE)
 
@@ -137,14 +139,13 @@ class Taskset(vf.Taskset[Task, TasksetConfig]):  # ty: ignore[invalid-type-argum
             db_path = root / "database" / db_id / f"{db_id}.sqlite"
             if not db_path.is_file():
                 raise FileNotFoundError(db_path)
-            prompt = f"{AGENTIC_PROMPT}\n\nQuestion: {row['question']}"
+            prompt = f"{PROMPT}\n\nQuestion: {row['question']}"
             tasks.append(
                 Task(
                     TaskData(
                         idx=idx,
                         name=f"{self.config.split}-{idx}",
                         prompt=prompt,
-                        system_prompt=SYSTEM_PROMPT,
                         split=self.config.split,
                         db_id=db_id,
                         db_path=str(db_path),
