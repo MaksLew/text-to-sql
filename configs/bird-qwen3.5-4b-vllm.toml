@@ -1,0 +1,30 @@
+model = "Qwen/Qwen3.5-4B"
+num_rollouts = 1
+max_concurrent = 8
+push = false
+
+[sampling]
+temperature = 0.0
+max_tokens = 4096
+
+[client]
+type = "eval"
+base_url = "http://127.0.0.1:8000/v1"
+api_key_var = "LLAMA_CPP_API_KEY" # Placeholder key; local vLLM has no authentication.
+
+[env.timeout]
+episode = 300
+
+[env.taskset]
+id = "bird-v1"
+split = "dev"
+data_dir = "data/bird/dev_20251106"
+
+[env.agent]
+max_turns = 12
+
+[env.agent.harness]
+id = "null"
+
+[env.agent.runtime]
+type = "subprocess"
