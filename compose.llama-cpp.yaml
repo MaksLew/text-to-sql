@@ -1,4 +1,17 @@
 services:
+  evaluator:
+    image: evaluator
+    build:
+      context: .
+      dockerfile: Dockerfile.evaluator
+    env_file: .env
+    network_mode: service:llama-cpp
+    depends_on:
+      - llama-cpp
+    volumes:
+      - ./data:/app/data:z
+      - ./outputs:/app/outputs:z
+
   llama-cpp:
     image: ghcr.io/ggml-org/llama.cpp:server
     ports:

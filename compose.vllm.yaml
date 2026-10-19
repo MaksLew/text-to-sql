@@ -1,0 +1,40 @@
+services:
+  evaluator:
+    image: evaluator
+    build:
+      context: .
+      dockerfile: Dockerfile.evaluator
+    env_file: .env
+    network_mode: service:vllm
+    depends_on:
+      - vllm
+    volumes:
+      - ./data:/app/data:z
+      - ./outputs:/app/outputs:z
+
+  vllm:
+    image: vllm/vllm-openai:v0.17.0
+    gpus: all
+    ipc: host
+    ports:
+      - "8000:8000"
+    environment:
+      HF_HOME: /workspace/hf
+      VLLM_USE_FLASHINFER_SAMPLER: "0"
+    volumes:
+      - ${HF_HOME:-/workspace/hf}:/workspace/hf
+    command:
+      - --model
+      - Qwen/Qwen3.5-4B
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --max-model-len
+      - "${CONTEXT_SIZE:-16384}"
+      - --language-model-only
+      - --reasoning-parser
+      - qwen3
+      - --enable-auto-tool-choice
+      - --tool-call-parser
+      - qwen3_coder
