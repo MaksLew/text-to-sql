@@ -19,6 +19,14 @@ You need Python 3.11–3.13 and [uv](https://docs.astral.sh/uv/getting-started/i
 
 See the environment READMEs for benchmark-specific setup and validation commands. Dataset use remains subject to the upstream benchmark terms.
 
+For a reproducible evaluator runtime, build the Docker image instead:
+
+```bash
+docker build -f Dockerfile.evaluator -t evaluator .
+```
+
+The complete container workflow, including dataset mounts, local inference servers, and result uploads, is documented in [docs/docker.md](docs/docker.md).
+
 ## Run an API model
 
 Add your API key to the `.env` created during setup, then use one of the configs documented by the chosen environment:
@@ -32,6 +40,14 @@ uv run --env-file .env vf-eval @ configs/<config>.toml -n 3 --no-push
 
 # Run the full split
 uv run --env-file .env vf-eval @ configs/<config>.toml --no-push
+```
+
+Or run the same evaluation in the container:
+
+```bash
+docker run --rm --env-file .env \
+  -v "$PWD/data:/app/data:z" -v "$PWD/outputs:/app/outputs:z" \
+  evaluator vf-eval @ configs/<config>.toml --no-push
 ```
 
 The checked-in API configs use OpenAI's API. To use another OpenAI-compatible endpoint, copy a config and change `model`, `client.base_url`, and `client.api_key_var`. You can also override the model with `--model <model>`.
@@ -55,7 +71,14 @@ THREADS=12 CONTEXT_SIZE=16384 MODEL_FILE=other.gguf \
   docker compose -f compose.llama-cpp.yaml up -d
 ```
 
-Use the local config listed in the chosen environment's README.
+Run the evaluator against that service:
+
+```bash
+docker compose -f compose.llama-cpp.yaml run --rm evaluator \
+  vf-eval @ configs/bird-qwen3.5-4b.toml --no-push
+```
+
+Use the corresponding local config listed in the chosen environment's README. For the GPU-backed vLLM workflow, see [docs/docker.md](docs/docker.md#vllm).
 
 ## Results
 

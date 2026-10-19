@@ -37,6 +37,22 @@ uv run --env-file .env vf-eval @ configs/bird-gpt-5.6-luna.toml --no-push
 
 Override its model with `--model <model>`. For a local llama.cpp server, use `configs/bird-qwen3.5-4b.toml`.
 
+### Docker
+
+Build the evaluator once, then select an inference stack:
+
+```bash
+docker build -f Dockerfile.evaluator -t evaluator .
+
+docker compose -f compose.llama-cpp.yaml run --rm evaluator \
+  vf-eval @ configs/bird-qwen3.5-4b.toml --no-push
+
+docker compose -f compose.vllm.yaml run --rm evaluator \
+  vf-eval @ configs/bird-qwen3.5-4b-vllm.toml --no-push
+```
+
+Start the selected model service first. See [`docs/docker.md`](../../docs/docker.md) for setup, API-model runs, mounts, and upload instructions.
+
 ## Scoring
 
 `execution_accuracy` is the only task score. It executes the predicted and gold queries once on the supplied SQLite database and compares their result rows as Python sets. Row order and duplicate counts are ignored.

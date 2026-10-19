@@ -29,6 +29,16 @@ uv run --env-file .env vf-eval @ configs/spider-gpt-5.6-luna.toml --no-push
 
 Override its model with `--model <model>`. For a local llama.cpp server, use the equivalent `configs/spider-qwen3.5-4b.toml` config.
 
+### Docker
+
+```bash
+docker build -f Dockerfile.evaluator -t evaluator .
+docker compose -f compose.llama-cpp.yaml run --rm evaluator \
+  vf-eval @ configs/spider-qwen3.5-4b.toml --no-push
+```
+
+Start llama.cpp first. See [`docs/docker.md`](../../docs/docker.md) for setup, API-model runs, mounts, and upload instructions.
+
 ## Scoring
 
 `execution_accuracy` is the only task score. It executes the predicted and gold queries on the original database and compares their results. Duplicate rows matter; row order matters when the gold query contains `ORDER BY`; equivalent output-column permutations are accepted.
