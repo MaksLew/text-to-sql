@@ -13,6 +13,7 @@ resolution-markers = [
 [manifest]
 members = [
     "bird-v1",
+    "bird-zero-shot",
     "spider-v1",
     "text-to-sql-thesis",
 ]
@@ -202,6 +203,21 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "verifiers", git = "https://github.com/PrimeIntellect-ai/verifiers.git?rev=bf2834cac27d882b6edc9388835791a395361954" }]
+
+[[package]]
+name = "bird-zero-shot"
+version = "0.1.0"
+source = { editable = "environments/bird_zero_shot" }
+dependencies = [
+    { name = "bird-v1" },
+    { name = "verifiers" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bird-v1", editable = "environments/bird_v1" },
+    { name = "verifiers", git = "https://github.com/PrimeIntellect-ai/verifiers.git?rev=bf2834cac27d882b6edc9388835791a395361954" },
+]
 
 [[package]]
 name = "certifi"

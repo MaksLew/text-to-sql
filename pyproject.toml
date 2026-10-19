@@ -10,4 +10,4 @@ spider-v1 = { workspace = true }
 verifiers = { git = "https://github.com/PrimeIntellect-ai/verifiers.git", rev = "bf2834cac27d882b6edc9388835791a395361954" }
 
 [tool.uv.workspace]
-members = ["environments/bird_v1", "environments/spider_v1"]
+members = ["environments/bird_v1", "environments/spider_v1", "environments/bird_zero_shot"]

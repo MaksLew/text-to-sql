@@ -1,11 +1,12 @@
 # Text-to-SQL evaluation
 
-This repository evaluates text-to-SQL models with [Verifiers](https://github.com/PrimeIntellect-ai/verifiers). Models inspect SQLite databases through read-only tools and return a query whose result is compared with the benchmark's gold query.
+This repository evaluates text-to-SQL models with [Verifiers](https://github.com/PrimeIntellect-ai/verifiers). Models inspect SQLite databases through read-only tools or receive schemas directly, and return a query whose result is compared with the benchmark's gold query.
 
 ## Environments
 
 - [Spider 1.0](environments/spider_v1/README.md)
 - [BIRD](environments/bird_v1/README.md)
+- [BIRD-zero-shot](environments/bird_zero_shot/README.md) (one turn, schema in prompt, no tools)
 
 Each environment README documents its dataset, tools, configuration and scoring behavior.
 
