@@ -14,7 +14,6 @@ if ! command -v uv >/dev/null; then
 fi
 
 uv sync
-uv run python scripts/apply_verifiers_uv_patch.py
 [[ -e .env ]] || cp .env.example .env
 
 [[ "$benchmark" == bird ]] || scripts/download_spider.sh

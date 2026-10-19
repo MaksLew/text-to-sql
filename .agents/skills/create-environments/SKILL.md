@@ -1,6 +1,6 @@
 ---
 name: create-environments
-description: Create or migrate native verifiers.v1 taskset, environment, and harness packages. Use to build a taskset, port a benchmark, add task tools, script or model a user, build a multi-agent environment, package an agent harness, or migrate an existing v0 environment to the typed v1 trace model.
+description: Create native verifiers.v1 taskset, environment, and harness packages. Use to build a taskset, port a benchmark, add task tools, script or model a user, build a multi-agent environment, or package an agent harness.
 ---
 
 # Create Tasksets
@@ -12,14 +12,14 @@ Create native v1 tasksets that are installable and runnable with verifiers.
 To start, ALWAYS use the CLI to create a package with the correct files:
 
 ```bash
-uv run init my-task-v1
+uv run vf-init my-task-v1
 ```
 
 Add only the components the contract needs:
 
 ```bash
-uv run init my-task-v1 -T      # task toolset
-uv run init my-agent-v1 -H     # custom reusable harness
+uv run vf-init my-task-v1 -T      # task toolset
+uv run vf-init my-agent-v1 -H     # custom reusable harness
 ```
 
 Often, the user does not want nor need a custom reusable harness, as verifiers offer a lot of built-in ones.
@@ -45,7 +45,7 @@ Ask the user about unresolved semantic choices instead of inventing them. Presen
 
 ## Native package contract
 
-A package exports one `vf.Taskset` subclass — and optionally one `vf.Env` subclass (multi-agent control flow) and/or one `vf.Harness` subclass — through `__all__`. The taskset export happens automatically when you bootstrap a new taskset using `uv run init`.
+A package exports one `vf.Taskset` subclass — and optionally one `vf.Env` subclass (multi-agent control flow) and/or one `vf.Harness` subclass — through `__all__`. The taskset export happens automatically when you bootstrap a new taskset using `uv run vf-init`.
 
 Do not add `load_environment()`, `load_taskset()`, or `load_harness()` functions. The v1 loader resolves classes and their config types from `__all__` and generic bases.
 
@@ -55,7 +55,7 @@ Use:
 import verifiers.v1 as vf
 ```
 
-Never mix v0 `Environment`, `Rubric`, `Parser`, `SingleTurnEnv`, `MultiTurnEnv`, or `ToolEnv` objects into a v1 taskset. Exclusively use functions, classes and objects from `verifiers.v1`.
+Use functions, classes, and objects from `verifiers.v1`.
 
 ## Minimal implementation
 
@@ -134,7 +134,7 @@ Runtime config chooses where code executes. Task hooks should use the `vf.Runtim
 
 ## Validation and lifecycle
 
-Implement `Task.validate(self, runtime)` whenever ground truth can be checked without a model. Keep rollout work on the task:
+Implement `Task.validate(self, runtime)` whenever ground truth can be checked without a model. `vf-validate` also runs a noop check that scores each task untouched (`setup`, `finalize`, then rewards, with no agent) and flags any that already pass, so scoring must hold up on unmodified state. Keep rollout work on the task:
 
 - `setup(self, trace, runtime)` — prepare files or services.
 - harness execution — let the agent act.
@@ -217,23 +217,6 @@ scoring and before the runtime is released, including for borrowed runtimes.
 - Never edit the repository root `pyproject.toml` or `uv.lock` for a taskset dependency.
 - Read required external credentials at the earliest owning boundary so missing values fail clearly.
 - Do not require a user-managed background server unless the contract explicitly uses a remote URL.
-
-## Migration from v0
-
-Map concepts directly:
-
-| V0 | Native v1 |
-| --- | --- |
-| Dataset row | Typed `vf.TaskData` subclass |
-| `load_environment(**kwargs)` | Exported `vf.Taskset` class + typed config |
-| `Rubric` reward function | Task `@vf.reward` method |
-| Parser object | Ordinary parsing inside task scoring |
-| `ToolEnv` tools | `vf.Toolset` constructed in `Task.toolsets` or `Taskset.toolsets` |
-| `MultiTurnEnv.env_response` | an interaction loop in the env's `run()` |
-| Dict state | Typed `vf.State` |
-| Sandbox subclass | Runtime config + task hooks |
-
-Preserve prompt, tool, and scoring equivalence before improving design. Compare representative v0 and v1 traces where feasible.
 
 ## Publish gate
 

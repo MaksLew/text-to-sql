@@ -4,4 +4,4 @@ verifiers is a framework for defining tasks, running agents and harnesses, scori
 
 ## Documentation
 
-This project uses **[verifiers v1](v1/overview.md)**, built around tasksets, harnesses, and traces.
+- **[verifiers v1](v1/overview.md)** — Documentation for `verifiers.v1`, built around tasksets, harnesses, and traces.

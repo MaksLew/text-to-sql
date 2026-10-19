@@ -37,8 +37,7 @@ A trace records the message graph, rewards, metrics, errors, and one per-call re
 - [Getting started](getting_started.md) - How to install verifiers and the needed skills.
 - [Architecture](architecture.md) — How verifiers works behind-the-scenes
 - [Tasksets](tasksets.md) — How to create tasksets
-- [Evaluation](evaluation.md) — How to evaluate tasksets
+  - [Evaluation](evaluation.md) — How to evaluate tasksets
 - [Harnesses](harnesses.md) — How to build custom harnesses
 - [Agent](agent.md) — How to run standalone agents
 - [Env](env.md) — How to build multi-agent environments
-

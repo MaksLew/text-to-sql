@@ -22,7 +22,7 @@ From the repository root:
 
 ```bash
 scripts/setup.sh bird
-uv run validate bird-v1 --runtime.type subprocess
+uv run vf-validate bird-v1 --runtime.type subprocess
 ```
 
 ## Evaluation
@@ -30,9 +30,9 @@ uv run validate bird-v1 --runtime.type subprocess
 The API config gives the model the question, evidence, and database tools:
 
 ```bash
-uv run --env-file .env eval @ configs/bird-gpt-5.6-luna.toml --dry-run
-uv run --env-file .env eval @ configs/bird-gpt-5.6-luna.toml -n 3 --no-push
-uv run --env-file .env eval @ configs/bird-gpt-5.6-luna.toml --no-push
+uv run --env-file .env vf-eval @ configs/bird-gpt-5.6-luna.toml --dry-run
+uv run --env-file .env vf-eval @ configs/bird-gpt-5.6-luna.toml -n 3 --no-push
+uv run --env-file .env vf-eval @ configs/bird-gpt-5.6-luna.toml --no-push
 ```
 
 Override its model with `--model <model>`. For a local llama.cpp server, use `configs/bird-qwen3.5-4b.toml`.

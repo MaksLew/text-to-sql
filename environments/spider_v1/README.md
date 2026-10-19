@@ -12,7 +12,7 @@ From the repository root:
 
 ```bash
 scripts/setup.sh spider
-uv run validate spider-v1 --runtime.type subprocess
+uv run vf-validate spider-v1 --runtime.type subprocess
 ```
 
 The setup script downloads the Spider dev data under `data/`.
@@ -22,9 +22,9 @@ The setup script downloads the Spider dev data under `data/`.
 The API config gives the model the question and database tools:
 
 ```bash
-uv run --env-file .env eval @ configs/spider-gpt-5.6-luna.toml --dry-run
-uv run --env-file .env eval @ configs/spider-gpt-5.6-luna.toml -n 3 --no-push
-uv run --env-file .env eval @ configs/spider-gpt-5.6-luna.toml --no-push
+uv run --env-file .env vf-eval @ configs/spider-gpt-5.6-luna.toml --dry-run
+uv run --env-file .env vf-eval @ configs/spider-gpt-5.6-luna.toml -n 3 --no-push
+uv run --env-file .env vf-eval @ configs/spider-gpt-5.6-luna.toml --no-push
 ```
 
 Override its model with `--model <model>`. For a local llama.cpp server, use the equivalent `configs/spider-qwen3.5-4b.toml` config.

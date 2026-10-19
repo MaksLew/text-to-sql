@@ -19,31 +19,19 @@ You need Python 3.11–3.13 and [uv](https://docs.astral.sh/uv/getting-started/i
 
 See the environment READMEs for benchmark-specific setup and validation commands. Dataset use remains subject to the upstream benchmark terms.
 
-### Pinned Verifiers workaround
-
-This project pins Verifiers at commit `c51c094a4018471b7fdc873eb5cb55bbd5e956e1`. That revision can repeatedly reinstall uv while preparing a subprocess runtime, eventually causing setup to time out. `scripts/setup.sh` patches the local `.venv` after `uv sync` to avoid the reinstall.
-
-If you run `uv sync` yourself, apply the patch again:
-
-```bash
-uv run python scripts/apply_verifiers_uv_patch.py
-```
-
-The patch only changes the ignored virtual environment. It can be removed when the pinned Verifiers revision includes the upstream fix.
-
 ## Run an API model
 
 Add your API key to the `.env` created during setup, then use one of the configs documented by the chosen environment:
 
 ```bash
 # Parse and resolve the config without calling the model
-uv run --env-file .env eval @ configs/<config>.toml --dry-run
+uv run --env-file .env vf-eval @ configs/<config>.toml --dry-run
 
 # Run three examples
-uv run --env-file .env eval @ configs/<config>.toml -n 3 --no-push
+uv run --env-file .env vf-eval @ configs/<config>.toml -n 3 --no-push
 
 # Run the full split
-uv run --env-file .env eval @ configs/<config>.toml --no-push
+uv run --env-file .env vf-eval @ configs/<config>.toml --no-push
 ```
 
 The checked-in API configs use OpenAI's API. To use another OpenAI-compatible endpoint, copy a config and change `model`, `client.base_url`, and `client.api_key_var`. You can also override the model with `--model <model>`.
