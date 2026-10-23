@@ -1,0 +1,24 @@
+model = "gpt-5.6-luna"
+num_rollouts = 1
+max_concurrent = 8
+push = true
+
+[sampling]
+temperature = 0.0
+reasoning_effort = "none"
+
+[client]
+type = "eval"
+base_url = "https://api.openai.com/v1"
+api_key_var = "OPENAI_API_KEY"
+
+[env.taskset]
+id = "bird-sql-trail"
+split = "dev"
+data_dir = "data/bird/dev_20251106"
+
+[env.agent.harness]
+id = "null"
+
+[env.agent.runtime]
+type = "subprocess"
