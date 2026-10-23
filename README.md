@@ -12,13 +12,16 @@ Each environment README documents its dataset, tools, configuration and scoring 
 
 ## Setup
 
-You need Python 3.11–3.13 and [uv](https://docs.astral.sh/uv/getting-started/installation/). The download scripts also use standard command-line tools such as `curl`, `unzip`, and `tar`.
+You need Python 3.11–3.13 and [uv](https://docs.astral.sh/uv/getting-started/installation/). The download scripts also use standard command-line tools such as `curl`, `unzip`, and `sha256sum`.
 
 ```bash
-./scripts/setup.sh all
+cp -n .env.example .env
+uv sync --frozen
+./scripts/download_bird.sh
+./scripts/download_spider.sh
 ```
 
-See the environment READMEs for benchmark-specific setup and validation commands. Dataset use remains subject to the upstream benchmark terms.
+Run only the download script for the benchmark you need. See the environment READMEs for validation commands. Dataset use remains subject to the upstream benchmark terms.
 
 For a reproducible evaluator runtime, build the Docker image instead:
 
@@ -83,25 +86,32 @@ Use the corresponding local config listed in the chosen environment's README. Fo
 
 ## Results
 
-Evaluation runs are initially written as flat directories under `outputs/`. Clean the directory by categorizing completed eval runs by environment and model and removing validation runs:
+Local runs are written under `outputs/`; locate their episode files with:
 
 ```bash
-scripts/clean_outputs.py --dry-run
-scripts/clean_outputs.py
+find outputs -name traces.jsonl -print
 ```
 
-This produces `outputs/<environment>/<model>/<run-id>/`. Other directories are left untouched. Each run includes the resolved config, traces, and logs. The prediction and any SQLite error are stored in each trace's `info` field.
-
-Summarize a run:
+Each `traces.jsonl` line is one episode. Inspect a selected episode with a one-off standard-library script rather than relying on a repository-specific result helper:
 
 ```bash
-scripts/summarize_run.py outputs/<environment>/<model>/<run-id>
-scripts/summarize_run.py outputs/<environment>/<model>/<run-id> --failures
+RUN=outputs/<run-directory>
+uv run python - "$RUN/traces.jsonl" 0 <<'PY'
+import json, pprint, sys
+
+path, index = sys.argv[1], int(sys.argv[2])
+with open(path) as lines:
+    episode = next(row for i, row in enumerate(lines) if i == index)
+pprint.pp(json.loads(episode))
+PY
 ```
 
-Inspect one trace:
+For a pushed run, use Prime CLI JSON output and page through all samples when the total exceeds the requested page size:
 
 ```bash
-scripts/show_trace.py outputs/<environment>/<model>/<run-id>/traces.jsonl       # first trace
-scripts/show_trace.py outputs/<environment>/<model>/<run-id>/traces.jsonl 4     # fifth trace
+prime --plain eval list --output json -n 20
+prime --plain eval get "$ID" --output json
+prime --plain eval samples "$ID" --output json -n 100 -p 1
 ```
+
+Use `jq` or a short one-off Python script to project only the rewards, errors, SQL, or calls needed for the question instead of dumping every full trace.

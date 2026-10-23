@@ -192,6 +192,31 @@ To overwrite a run dir and start fresh instead, use `--clean`.
 
 ## Trace inspection
 
+ For a local run, locate `traces.jsonl`, inspect its actual JSON shape, then write the smallest one-off Python/`jq` command needed for the question:
+
+```bash
+find outputs -name traces.jsonl -print
+uv run python - <run-dir>/traces.jsonl 0 <<'PY'
+import json, pprint, sys
+
+path, index = sys.argv[1], int(sys.argv[2])
+with open(path) as lines:
+    row = next(line for i, line in enumerate(lines) if i == index)
+pprint.pp(json.loads(row))
+PY
+```
+
+Adapt the projection instead of dumping whole runs into context. Each local JSONL line is an episode, so inspect every relevant trace within it rather than assuming `traces[0]` is the target agent.
+
+For a pushed run, use the read-only Prime CLI rather than a local helper or a rerun:
+
+```bash
+prime --plain eval get "$ID" --output json
+prime --plain eval samples "$ID" --output json -n 100 -p 1
+```
+
+Page until all `.total` samples are covered. Use `.agents/skills/inspect-pushed-evals/SKILL.md` for the persisted sample shape and focused `jq` projections.
+
 For each representative sample inspect:
 
 - `task` and prompt fields;

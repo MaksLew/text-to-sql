@@ -9,7 +9,7 @@ Each task gives the model only the natural-language question and complete SQLite
 Use the same BIRD data as `bird-v1`:
 
 ```bash
-scripts/setup.sh bird
+./scripts/download_bird.sh
 uv run vf-validate bird-sql-trail --runtime.type subprocess
 ```
 

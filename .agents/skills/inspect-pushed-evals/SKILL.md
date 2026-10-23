@@ -5,7 +5,7 @@ description: Inspect pushed Prime Intellect evaluations, especially Verifiers v1
 
 # Inspect pushed evaluations (no rerun)
 
-Use `prime --plain` for CLI calls; use `--output json` and `jq` to keep large traces out of the context. Never launch, push, or rerun an eval just to inspect it. If there are multiple candidate runs, identify the right ID by model, environment, name, and status; ask if ambiguous.
+Use `prime --plain` for CLI calls; use `--output json` and `jq` to keep large traces out of the context. Use these read-only commands or write a small one-off Python script against the returned JSON. Never launch, push, or rerun an eval just to inspect it. If there are multiple candidate runs, identify the right ID by model, environment, name, and status; ask if ambiguous.
 
 ```bash
 prime --plain eval list --output json -n 20 | jq '{total, evaluations:[.evaluations[]? | {id:(.evaluation_id // .id), name, status, model_name, environment_names}]}'

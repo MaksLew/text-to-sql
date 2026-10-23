@@ -17,7 +17,7 @@ Downloaded files are stored under `data/bird/`. Their use remains subject to BIR
 From the repository root:
 
 ```bash
-scripts/download_bird.sh
+./scripts/download_bird.sh
 uv run --package bird-zero-shot vf-validate bird-zero-shot --runtime.type subprocess
 ```
 

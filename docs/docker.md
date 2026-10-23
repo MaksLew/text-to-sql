@@ -12,12 +12,16 @@ docker build -f Dockerfile.evaluator -t evaluator .
 
 Add the required API keys to `.env`. `PRIME_API_KEY` is only needed when uploading a run with `--push`; checked-in configs keep `push = false`.
 
-Download the benchmark data on the host with `./scripts/setup.sh all`, or through the evaluator image:
+Download the required benchmark data on the host with `./scripts/download_bird.sh` and/or `./scripts/download_spider.sh`, or through the evaluator image:
 
 ```bash
 docker run --rm \
   -v "$PWD/data:/app/data:z" \
-  evaluator ./scripts/setup.sh all
+  evaluator ./scripts/download_bird.sh
+
+docker run --rm \
+  -v "$PWD/data:/app/data:z" \
+  evaluator ./scripts/download_spider.sh
 ```
 
 ## API model

@@ -11,7 +11,7 @@ The model must return one SQLite query. If the reply contains a SQL code block, 
 From the repository root:
 
 ```bash
-scripts/setup.sh spider
+./scripts/download_spider.sh
 uv run vf-validate spider-v1 --runtime.type subprocess
 ```
 

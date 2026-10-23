@@ -8,4 +8,5 @@ This project pins Prime Intellect Verifiers at commit `bf2834cac27d882b6edc93888
 - Project-local Verifiers skills live in `.agents/skills/`; load the relevant skill before creating or evaluating environments.
 - Paths written as `docs/...` inside the copied Verifiers skills refer to `docs/verifiers/...` in this repository.
 - Only documentation relevant to this project's Verifiers API is retained.
+- When inspecting runs, use the read-only Prime CLI for pushed evaluations or a one-off script against the actual local JSON.
 - When updating Verifiers, refresh this curated documentation and skills set from the new pinned commit.
