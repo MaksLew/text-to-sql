@@ -3,10 +3,7 @@ name = "bird-zero-shot"
 version = "0.1.0"
 description = "BIRD-zero-shot: single-turn SQLite generation from questions and schemas."
 requires-python = ">=3.11"
-dependencies = ["verifiers", "bird-v1"]
-
-[tool.uv.sources]
-bird-v1 = { workspace = true }
+dependencies = ["verifiers"]
 
 [build-system]
 requires = ["hatchling"]

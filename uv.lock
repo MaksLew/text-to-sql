@@ -199,15 +199,11 @@ name = "bird-sql-trail"
 version = "0.1.0"
 source = { editable = "environments/bird_sql_trail" }
 dependencies = [
-    { name = "bird-v1" },
     { name = "verifiers" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "bird-v1", editable = "environments/bird_v1" },
-    { name = "verifiers", git = "https://github.com/PrimeIntellect-ai/verifiers.git?rev=bf2834cac27d882b6edc9388835791a395361954" },
-]
+requires-dist = [{ name = "verifiers", git = "https://github.com/PrimeIntellect-ai/verifiers.git?rev=bf2834cac27d882b6edc9388835791a395361954" }]
 
 [[package]]
 name = "bird-v1"
@@ -225,15 +221,11 @@ name = "bird-zero-shot"
 version = "0.1.0"
 source = { editable = "environments/bird_zero_shot" }
 dependencies = [
-    { name = "bird-v1" },
     { name = "verifiers" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "bird-v1", editable = "environments/bird_v1" },
-    { name = "verifiers", git = "https://github.com/PrimeIntellect-ai/verifiers.git?rev=bf2834cac27d882b6edc9388835791a395361954" },
-]
+requires-dist = [{ name = "verifiers", git = "https://github.com/PrimeIntellect-ai/verifiers.git?rev=bf2834cac27d882b6edc9388835791a395361954" }]
 
 [[package]]
 name = "certifi"

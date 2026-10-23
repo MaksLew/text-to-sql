@@ -2,17 +2,18 @@ import asyncio
 import json
 import re
 import sqlite3
+import time
 from pathlib import Path
 from typing import Literal, cast
 
 import verifiers.v1 as vf
-from bird_v1.taskset import _execution_match, _extract_sql
 
 from bird_sql_trail.servers.tool import BirdSqlTrailToolset, ToolConfig
 
 SYSTEM_PROMPT = """Translate the user's question into one correct, read-only SQLite query.
 The complete database schema is provided. Use database.query to inspect or test data
 when useful. Return only the final SQL query, without Markdown or explanation."""
+_FENCE = re.compile(r"```(?:sql)?\s*(.*?)```", re.IGNORECASE | re.DOTALL)
 _SQL_TOKEN = re.compile(
     r"'(?:''|[^'])*'|\"(?:\"\"|[^\"])*\"|[A-Za-z_][\w$]*|\d+(?:\.\d+)?|<>|!=|<=|>=|[-+*/%=<>().,;]"
 )
@@ -151,6 +152,40 @@ class BirdSqlTrailTaskset(vf.Taskset[BirdSqlTrailTask, BirdSqlTrailConfig]):  # 
                 )
             )
         return tasks
+
+
+def _extract_sql(reply: str) -> str:
+    match = _FENCE.search(reply)
+    return (match.group(1) if match else reply).strip().removesuffix(";").strip()
+
+
+def _execute(db_path: str, sql: str) -> list[tuple]:
+    if not sql:
+        raise sqlite3.OperationalError("empty prediction")
+    deadline = time.monotonic() + 30
+    uri = Path(db_path).resolve().as_uri() + "?mode=ro"
+    with sqlite3.connect(uri, uri=True) as connection:
+        connection.text_factory = lambda value: value.decode(errors="ignore")
+        connection.execute("PRAGMA query_only = ON")
+        connection.set_progress_handler(
+            lambda: int(time.monotonic() > deadline), 10_000
+        )
+        return connection.execute(sql).fetchall()
+
+
+def _execution_match(
+    db_path: str, gold_sql: str, predicted_sql: str
+) -> tuple[bool, str | None]:
+    """Official BIRD execution accuracy: set equality of result rows."""
+    try:
+        gold = _execute(db_path, gold_sql)
+    except sqlite3.Error as error:
+        raise RuntimeError(f"gold SQL failed for {db_path}: {error}") from error
+    try:
+        predicted = _execute(db_path, predicted_sql)
+    except sqlite3.Error as error:
+        return False, str(error)
+    return set(gold) == set(predicted), None
 
 
 def _schema(db_path: Path) -> tuple[str, list[str]]:
