@@ -8,7 +8,7 @@ from typing import Literal, cast
 
 import verifiers.v1 as vf
 
-from bird_sql_trail.servers.tool import BirdSqlTrailToolset, ToolConfig
+from bird_sql_trail.tools import BirdSqlTrailToolset, ToolConfig
 
 SYSTEM_PROMPT = """Translate the user's question into one correct, read-only SQLite query.
 The complete database schema is provided. Use database.query to inspect or test data
