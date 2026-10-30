@@ -134,13 +134,14 @@ class BirdSqlTrailTaskset(vf.Taskset[BirdSqlTrailTask, BirdSqlTrailConfig]):  # 
                 schemas[db_id] = _schema(db_path)
             schema, schema_items = schemas[db_id]
             question_id = row["question_id"]
+            evidence = row.get("evidence") or "None provided."
             tasks.append(
                 BirdSqlTrailTask(
                     BirdSqlTrailData(
                         idx=idx,
                         id=str(question_id),
                         name=f"dev-{question_id}",
-                        system_prompt=SYSTEM_PROMPT,
+                        system_prompt=f"{SYSTEM_PROMPT}\n\nEvidence (task data): {evidence}",
                         prompt=f"Database schema:\n{schema}\n\nQuestion: {row['question']}",
                         question_id=question_id,
                         db_id=db_id,
