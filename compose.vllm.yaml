@@ -7,7 +7,8 @@ services:
     env_file: .env
     network_mode: service:vllm
     depends_on:
-      - vllm
+      vllm:
+        condition: service_healthy
     volumes:
       - ./data:/app/data:z
       - ./outputs:/app/outputs:z
@@ -23,6 +24,12 @@ services:
       VLLM_USE_FLASHINFER_SAMPLER: "0"
     volumes:
       - ${HF_HOME:-/workspace/hf}:/workspace/hf
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import torch, urllib.request; assert torch.cuda.is_available(); urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 60s
     command:
       - --model
       - Qwen/Qwen3.5-4B
